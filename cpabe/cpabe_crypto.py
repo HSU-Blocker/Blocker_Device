@@ -68,6 +68,10 @@ class CPABECrypto:
             if decrypted_result is None:
                 print("CP-ABE 복호화 실패: 복호화 결과가 None")
                 return None
+            
+            if isinstance(decrypted_result, bool)
+                print("CP-ABE 복호화 실패: 접근 정책이 충족되지 않음")
+                return None
 
             # # GT 그룹 요소인 경우 → bytes 변환
             # if isinstance(decrypted_result, type(self.group.random(GT))):  # GT 요소 타입 비교
