@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
         # AES 암호화 Es(bj, kbj)
         encrypted_data = encrypt_with_aes(bj, kbj)
-        print(f"암호화된 데이터 길이: {len(encrypted_data)} bytes")
+        print(f"암호화된 데이터 bj 길이: {len(encrypted_data)} bytes")
 
         # 암호화된 데이터를 파일로 저장 
         # 해당 파일을 IPFS에 업로드 필요
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
         # AES 복호화 bj <- Dc(bj, kbj)
         decrypted_data = decrypt_with_aes(loaded_encrypted_file, kbj)
-        print(f"복호화된 데이터 길이: {len(decrypted_data)} bytes")
+        print(f"복호화된 데이터 bj 길이: {len(decrypted_data)} bytes")
 
         # 복호화된 데이터를 파일로 저장
         # 해당 파일을 IoT 디바이스에 전송
