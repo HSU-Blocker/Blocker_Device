@@ -1,12 +1,12 @@
 import os
-from cpabe.cpabe_init import CPABEInit
-from cpabe.cpabe_crypto import CPABECrypto
-from aes.aes_crypto import AESCrypto
+from crypto.cpabe_init import CPABEInit
+from crypto.cpabe_crypto import CPABECrypto
+from crypto.aes_crypto import AESCrypto
 from charm.toolbox.pairinggroup import GT
 
-from um.update_message_utils import UpdateMessage
-from ecdsa.ecdsa_utils import ECDSAUtils
-from sha3.sha3_utils import SHA3Utils
+from update_message_utils import UpdateMessage
+from security.ecdsa_utils import ECDSAUtils
+from security.sha3_utils import SHA3Utils
 
 # 원본 데이터 파일 경로
 original_file = "data/original_data.bin"

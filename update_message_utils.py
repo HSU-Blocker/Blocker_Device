@@ -1,7 +1,7 @@
 import hashlib
 import json
-from ecdsa.ecdsa_utils import ECDSAUtils
-from sha3.sha3_utils import SHA3Utils
+from security.ecdsa_utils import ECDSAUtils
+from security.sha3_utils import SHA3Utils
 from distributed_storage.blockchain_utils import upload_to_blockchain  # 블록체인 저장 함수
 
 class UpdateMessage:
