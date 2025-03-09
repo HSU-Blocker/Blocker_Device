@@ -69,7 +69,7 @@ class CPABECrypto:
                 print("CP-ABE 복호화 실패: 복호화 결과가 None")
                 return None
             
-            if isinstance(decrypted_result, bool)
+            if isinstance(decrypted_result, bool):
                 print("CP-ABE 복호화 실패: 접근 정책이 충족되지 않음")
                 return None
 
