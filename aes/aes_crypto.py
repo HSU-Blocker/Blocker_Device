@@ -2,7 +2,7 @@ import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
-class AESCipher:
+class AESCrypto:
     # AES 암호화 클래스 (CBC 모드)
     def __init__(self, key: bytes):
         if len(key) not in (16, 24, 32):

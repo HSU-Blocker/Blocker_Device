@@ -1,8 +1,8 @@
 import os
-from cpabe_init import CPABEInit
-from cpabe_crypto import CPABECrypto
-from aes_init import AESInit
-from aes_crypto import AESCrypto
+from cpabe.cpabe_init import CPABEInit
+from cpabe.cpabe_crypto import CPABECrypto
+from aes.aes_init import AESInit
+from aes.aes_crypto import AESCrypto
 
 # 원본 데이터 파일 경로
 original_file = "data/original_data.bin"
