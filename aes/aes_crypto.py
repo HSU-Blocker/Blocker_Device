@@ -16,6 +16,7 @@ class AESCrypto:
             raise ValueError("암호화할 데이터는 바이트 형식이어야 합니다.")
 
         iv = os.urandom(16)  # AES 블록 크기 (16바이트 IV)
+        print(f"AES kbj key: {self.key}")
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         encrypted_data = cipher.encrypt(pad(data, AES.block_size))
         return iv + encrypted_data  # IV + 암호화된 데이터 반환
@@ -37,7 +38,7 @@ class AESCrypto:
     @staticmethod
     def read_data_from_file(filename: str) -> bytes:
         if not os.path.exists(filename):
-            raise FileNotFoundError(f"⛔ 파일 '{filename}'을 찾을 수 없습니다.")
+            raise FileNotFoundError(f"파일 '{filename}'을 찾을 수 없습니다.")
 
         with open(filename, "rb") as file:
             data = file.read()
@@ -50,4 +51,4 @@ class AESCrypto:
 
         with open(filename, "wb") as file:
             file.write(data)
-        print(f"📂 데이터가 '{filename}' 파일에 저장됨.")
+        print(f"데이터가 '{filename}' 파일에 저장됨.")
