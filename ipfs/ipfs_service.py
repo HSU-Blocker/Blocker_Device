@@ -1,18 +1,29 @@
-import ipfshttpclient
+import requests
 import os
-from config import IPFS_API_ADDR
 
 class IPFSClient:
-    def __init__(self):
-		    # IPFS 노드/게이트웨이에 연결
-        self.client = ipfshttpclient.connect(IPFS_API_ADDR)
+    def __init__(self, gateway_url="https://ipfs.io/ipfs/"):
+        """
+        :param gateway_url: IPFS 게이트웨이 URL (기본: https://ipfs.io/ipfs/)
+        """
+        self.gateway_url = gateway_url
 
     def download_file(self, cid, target_path="update.enc"):
         """
-        IPFS에서 CID로 파일을 다운로드하여 target_path에 저장
+        IPFS에서 CID를 사용하여 파일을 다운로드하여 target_path에 저장.
         """
-        # ipfshttpclient의 get()은 CID 기반으로 폴더/파일을 가져옴
-        # 만약 CID가 단일 파일이면 target_path로 저장
-        self.client.get(cid, target=target_path)
-        # 실제로는 CID가 폴더 형태면 다른 처리가 필요할 수도 있음
-        return target_path # 어떤 경로에 파일이 저장되었는지 반환
+        url = f"{self.gateway_url}{cid}"
+        print(f"[ipfs_service] url : {url}");
+        response = requests.get(url, stream=True)
+
+        if response.status_code == 200:
+            # 다운로드한 파일을 지정된 경로에 저장
+            with open(target_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    file.write(chunk)
+
+            print(f"[ipfs_service] 다운로드 완료: {target_path}")
+            return target_path
+        else:
+            raise Exception(f"[ipfs_service] 다운로드 실패! 상태 코드: {response.status_code}")
+
