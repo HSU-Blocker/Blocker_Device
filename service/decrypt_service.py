@@ -5,16 +5,11 @@ from charm.toolbox.pairinggroup import GT
 # 현재 경로를 기준으로 crypto 폴더 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from crypto.cpabe_init import CPABEInit
 from crypto.aes_decrypt import AESDecrypt
 from crypto.cpabe_decrypt import CPABEDecrypt
 
-def decrypt_kbj_with_cpabe(encrypted_kbj, user_id, user_attributes):
+def decrypt_kbj_with_cpabe(encrypted_kbj, device_secret_key, cpabe, group, public_key):
     """CP-ABE를 이용하여 AES 키(kbj)를 복호화하는 함수"""
-    cpabe_init = CPABEInit()
-    cpabe, group, public_key = cpabe_init.get_cpabe_objects()
-    device_secret_key = cpabe_init.generate_secret_key(user_id, user_attributes)
-
     cpabe_decryptor = CPABEDecrypt(cpabe, group, public_key)
     decrypted_kbj = cpabe_decryptor.decrypt(device_secret_key, encrypted_kbj)
 
@@ -45,13 +40,12 @@ def decrypt_bj_with_aes(aes_key, encrypted_aes_file, decrypted_aes_file):
         print(f"AES 복호화 실패: {e}")
         return False
 
-def decrypt_and_retrieve(encrypted_kbj, user_id, user_attributes, encrypted_aes_file, decrypted_aes_file):
+def decrypt_and_retrieve(encrypted_kbj, device_secret_key, encrypted_aes_file, decrypted_aes_file, cpabe, group, public_key):
     """CP-ABE 및 AES 복호화를 한 번에 수행하는 함수"""
-    aes_key = decrypt_kbj_with_cpabe(encrypted_kbj, user_id, user_attributes)
+    aes_key = decrypt_kbj_with_cpabe(encrypted_kbj, device_secret_key, cpabe, group, public_key)
 
     if aes_key is None:
         print("복호화 프로세스 중단: AES 키 복호화 실패")
         return False
 
     return decrypt_bj_with_aes(aes_key, encrypted_aes_file, decrypted_aes_file)
-    

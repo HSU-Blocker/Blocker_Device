@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "service
 
 from encrypt_service import encrypt_and_store
 from decrypt_service import decrypt_and_retrieve
+from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
 
 # 테스트용 사용자 정보
 USER_ID = "device_1"
@@ -23,14 +24,18 @@ def main():
     2. 생성된 `encrypted_kbj`를 이용해 복호화를 수행하는 메인 함수
     """
     print("\nAES & CP-ABE 암호화 수행")
-    encrypted_kbj = encrypt_and_store(USER_ID, USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
+    encrypted_kbj, device_secret_key = encrypt_and_store(USER_ID, USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
 
     if not encrypted_kbj:
         print("암호화 실패.")
         return
 
+    # CP-ABE 객체 및 페어링 그룹 가져오기 (복호화에서 필요)
+    cpabe_init = CPABEInit()
+    cpabe, group, public_key = cpabe_init.get_cpabe_objects()
+
     print("\nAES & CP-ABE 복호화 수행")
-    result = decrypt_and_retrieve(encrypted_kbj, USER_ID, USER_ATTRIBUTES, ENCRYPTED_AES_FILE, DECRYPTED_AES_FILE)
+    result = decrypt_and_retrieve(encrypted_kbj, device_secret_key, ENCRYPTED_AES_FILE, DECRYPTED_AES_FILE, cpabe, group, public_key)
 
     if result:
         print("복호화 프로세스 성공")
