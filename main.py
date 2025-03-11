@@ -48,11 +48,11 @@ def main():
     # 제조사에서 업데이트 메시지 생성 및 서명 생성
     ecdsa = ECDSAUtils(MANUFACTURE_PUBLIC_KEY_PATH, MANUFACTURE_PRIVATE_KEY_PATH)
     sha3 = SHA3Utils()
-    update_message = sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE_PATH, encrypted_kbj) # 아직 블록체인 업로드 연동 x
+    update_message, signature = sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE_PATH, encrypted_kbj) # 아직 블록체인 업로드 연동 x
 
     ## IoT 기기에서 서명 검증
     device_ecdsa = ECDSAUtils(MANUFACTURE_PUBLIC_KEY_PATH)  # 디바이스에서는 서명 검증을 하기 때문에 개인 키 불필요
-    is_valid = device_ecdsa.verify_signature(update_message, signature) # 실제로는 파라미터에 블록체인에서 다운 받은 um 넣기
+    is_valid = device_ecdsa.verify_signature(update_message, signature) # 실제로는 파라미터에 블록체인에서 다운 받은 um, 서명 넣기
     print(f"IoT 기기에서의 서명 검증 여부: ", is_valid)
 
     # 복호화 (디바이스)
