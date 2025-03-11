@@ -54,7 +54,7 @@ def encrypt_and_store(user_attributes, policy, original_file, encrypted_aes_file
     cpabe, group, public_key = cpabe_init.get_cpabe_objects()
 
     # 기존: device_secret_key를 내부에서만 사용 → 변경: 반환하도록 수정
-    device_secret_key = cpabe_init.generate_device_secret_key(user_id, user_attributes)
+    device_secret_key = cpabe_init.generate_device_secret_key(user_attributes)
 
     kbj = group.random(GT)  # GT 그룹 요소로 키 생성
     print(f"GT 그룹에서 생성된 AES 키(kbj): {kbj}")
