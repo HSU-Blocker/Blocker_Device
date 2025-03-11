@@ -4,17 +4,17 @@ import json
 from security.ecdsa_utils import ECDSAUtils
 from security.sha3_utils import SHA3Utils
 
-def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj):
+def create_update_message(sha3, sw_version, ipfs_url, encrypted_data_path, encrypted_kbj):
     """
     업데이트 메시지를 생성하는 함수
     - sha3: SHA3Utils 객체
     - sw_version: 소프트웨어 버전
     - ipfs_url: IPFS에 저장된 데이터 URL
-    - encrypted_data: 암호화된 bj 데이터
+    - encrypted_data_path: 암호화된 bj 데이터 경로
     - encrypted_kbj: CP-ABE로 암호화된 kbj (bytes)
     """
     # SHA3-256 해시 값 생성
-    hEbj = sha3.compute_sha3_hash(encrypted_data)  # 암호화된 bj의 해시 값
+    hEbj = sha3.compute_sha3_hash(encrypted_data_path)  # 암호화된 bj의 해시 값
 
     # UID 생성: `sw_version` + `ipfs_url`
     uid_combined = f"{sw_version}|{ipfs_url}"
@@ -28,18 +28,18 @@ def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_
 
     return update_message
 
-def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj):
+def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data_path, encrypted_kbj):
     """
     업데이트 메시지를 서명하고 블록체인에 업로드
     - ecdsa: ECDSAUtils 객체
     - sha3: SHA3Utils 객체
     - sw_version: 소프트웨어 버전
     - ipfs_url: IPFS에 저장된 데이터 URL
-    - encrypted_data: 암호화된 bj 데이터
+    - encrypted_data_path: 암호화된 bj 데이터 경로
     - encrypted_kbj: CP-ABE로 암호화된 kbj (bytes)
     """
     # 업데이트 메시지 생성
-    update_message = create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj)
+    update_message = create_update_message(sha3, sw_version, ipfs_url, encrypted_data_path, encrypted_kbj)
     print(f"업데이트 메시지 생성 완료: {update_message}")
 
     # ECDSA 서명 생성 
@@ -61,3 +61,21 @@ def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data, en
     # })
 
     # return result
+
+def get_uid(update_message):
+    """
+    업데이트 메시지에서 UID 값을 가져오는 함수
+    """
+    return update_message.get("UID", None)
+
+def get_he_bj(update_message):
+    """
+    업데이트 메시지에서 hEbj 값을 가져오는 함수 (SHA3 해시)
+    """
+    return update_message.get("hEbj", None)
+
+def get_encrypted_kbj(update_message):
+    """
+    업데이트 메시지에서 암호화된 kbj 값을 가져오는 함수
+    """
+    return update_message.get("encrypted_kbj", None)
