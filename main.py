@@ -9,7 +9,6 @@ from decrypt_service import decrypt_and_retrieve
 from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
 
 # 테스트용 사용자 정보
-USER_ID = "device_1"
 USER_ATTRIBUTES = ["ATTR1", "ATTR2", "ATTR4"]
 POLICY = "((ATTR1 and ATTR2) or (ATTR3 and ATTR4))"
 
@@ -24,9 +23,9 @@ def main():
     2. 생성된 `encrypted_kbj`를 이용해 복호화를 수행하는 메인 함수
     """
     # 암호화 (제조업체)
-    # 암호화된 kbj ->
+    # SKd는 디바이스에서도 필요하기 때문에 전달해놓아야 함
     print("\nAES & CP-ABE 암호화 수행")
-    encrypted_kbj, device_secret_key = encrypt_and_store(USER_ID, USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
+    encrypted_kbj, device_secret_key = encrypt_and_store(USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
 
     if not encrypted_kbj:
         print("암호화 실패.")
