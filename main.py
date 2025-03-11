@@ -23,6 +23,8 @@ def main():
     1. AES + CP-ABE 암호화를 수행하고
     2. 생성된 `encrypted_kbj`를 이용해 복호화를 수행하는 메인 함수
     """
+    # 암호화 (제조업체)
+    # 암호화된 kbj ->
     print("\nAES & CP-ABE 암호화 수행")
     encrypted_kbj, device_secret_key = encrypt_and_store(USER_ID, USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
 
@@ -30,6 +32,7 @@ def main():
         print("암호화 실패.")
         return
 
+    # 복호화 (디바이스)
     # CP-ABE 객체 및 페어링 그룹 가져오기 (복호화에서 필요)
     cpabe_init = CPABEInit()
     cpabe, group, public_key = cpabe_init.get_cpabe_objects()
