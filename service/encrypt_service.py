@@ -26,8 +26,6 @@ def encrypt_bj_with_aes(kbj, group, original_file, encrypted_aes_file):
         bj_data = f.read()
     encrypted_bj = aes.encrypt(bj_data)
 
-    # 암호화된 bj를 파일로 저장
-    # 실제로는 이 파일을 IPFS에 업로드
     AESEncrypt.save_to_file(encrypted_bj, encrypted_aes_file)
 
     print(f"AES 암호화 완료, 저장 위치: {encrypted_aes_file}")
@@ -56,6 +54,7 @@ def encrypt_and_store(user_id, user_attributes, policy, original_file, encrypted
     cpabe_init = CPABEInit()
     cpabe, group, public_key = cpabe_init.get_cpabe_objects()
 
+    # 기존: device_secret_key를 내부에서만 사용 → 변경: 반환하도록 수정
     device_secret_key = cpabe_init.generate_secret_key(user_id, user_attributes)
 
     kbj = group.random(GT)  # GT 그룹 요소로 키 생성
