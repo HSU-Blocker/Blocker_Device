@@ -1,8 +1,8 @@
+import msgpack
 import hashlib
 import json
 from security.ecdsa_utils import ECDSAUtils
 from security.sha3_utils import SHA3Utils
-# from distributed_storage.blockchain_utils import upload_to_blockchain  # 블록체인 저장 함수
 
 def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj):
     """
@@ -11,7 +11,7 @@ def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_
     - sw_version: 소프트웨어 버전
     - ipfs_url: IPFS에 저장된 데이터 URL
     - encrypted_data: 암호화된 bj 데이터
-    - encrypted_kbj: CP-ABE로 암호화된 kbj
+    - encrypted_kbj: CP-ABE로 암호화된 kbj (bytes)
     """
     # SHA3-256 해시 값 생성
     hEbj = sha3.compute_sha3_hash(encrypted_data)  # 암호화된 bj의 해시 값
@@ -23,7 +23,7 @@ def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_
     update_message = {
         "UID": uid_combined,
         "hEbj": hEbj,
-        "encrypted_kbj": encrypted_kbj  # CP-ABE로 암호화된 kbj
+        "encrypted_kbj": encrypted_kbj  # `bytes` 그대로 유지
     }
 
     return update_message
@@ -36,25 +36,28 @@ def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data, en
     - sw_version: 소프트웨어 버전
     - ipfs_url: IPFS에 저장된 데이터 URL
     - encrypted_data: 암호화된 bj 데이터
-    - encrypted_kbj: CP-ABE로 암호화된 kbj
+    - encrypted_kbj: CP-ABE로 암호화된 kbj (bytes)
     """
     # 업데이트 메시지 생성
     update_message = create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj)
     print(f"업데이트 메시지 생성 완료: {update_message}")
 
-    # ECDSA 서명 생성
-    signature = ecdsa.sign_message(update_message)
+    # ✅ `msgpack`을 사용하여 `bytes` 포함된 객체 직렬화
+    serialized_message = msgpack.dumps(update_message)
+
+    # ECDSA 서명 생성 (msgpack 직렬화된 데이터 사용)
+    signature = ecdsa.sign_message(serialized_message)
     print(f"ECDSA 서명 생성 완료: {signature}")
 
     # 서명 검증
-    is_valid = ecdsa.verify_signature(update_message, signature)
+    is_valid = ecdsa.verify_signature(serialized_message, signature)
     if not is_valid:
         print("ECDSA 서명 검증 실패. 블록체인에 업로드 X")
         return None
 
-    # # um과 서명을 블록체인 업로드
+    # # 블록체인 업로드 코드 (나중에 추가 가능)
     # result = upload_to_blockchain({
-    #     "update_message": update_message,
+    #     "update_message": serialized_message,
     #     "signature": signature
     # })
 
