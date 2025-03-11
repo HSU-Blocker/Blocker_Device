@@ -8,8 +8,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "service
 
 from encrypt_service import encrypt_and_store
 from decrypt_service import decrypt_and_retrieve
-from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
 from update_message_service import sign_and_upload_update
+
+from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
 from security.ecdsa_utils import ECDSAUtils
 from security.sha3_utils import SHA3Utils
 
@@ -47,7 +48,7 @@ def main():
     # 제조사에서 업데이트 메시지 생성 및 서명 생성
     ecdsa = ECDSAUtils(manufacture_private_key, manufacture_public_key)
     sha3 = SHA3Utils()
-    update_message_service.sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
+    sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
 
     # 복호화 (디바이스)
     # CP-ABE 객체 및 페어링 그룹 가져오기 (복호화에서 필요)
