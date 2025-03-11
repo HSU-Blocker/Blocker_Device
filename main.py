@@ -75,7 +75,7 @@ def main():
     # 블록체인에서 다운 받은 해시값과 IPFS에서 다운 받은 암호화된 파일의 해시값 비교
     # 일단 IPFS 제외하고 암호화된 파일의 경로를 파라미터로
     is_match = sha3.verify_sha3_hash(hEbj, ENCRYPTED_AES_FILE_PATH)
-    print(f"IoT 디바이스에서 hEBJ & IPFS에서 다운 받은 파일 해시 값 비겨 여부: ", is_match)
+    print(f"IoT 디바이스에서 hEBJ & IPFS에서 다운 받은 파일 해시 값 비교 여부: ", is_match)
     if(is_match == False)
         exit()
 
