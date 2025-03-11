@@ -52,7 +52,7 @@ def main():
 
 
     ## IoT 기기에서 서명 검증
-    device_ecdsa = ECDSAUtils(pMANUFACTURE_PUBLIC_KEY_PATH)  # 디바이스에서는 서명 검증을 하기 때문에 개인 키 불필요
+    device_ecdsa = ECDSAUtils(MANUFACTURE_PUBLIC_KEY_PATH)  # 디바이스에서는 서명 검증을 하기 때문에 개인 키 불필요
     is_valid = device_ecdsa.verify_signature(update_message, signature)
     print(f"IoT 기기에서의 서명 검증 여부: ", is_valid)
 
