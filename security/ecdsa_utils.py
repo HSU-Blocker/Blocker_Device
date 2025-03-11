@@ -8,28 +8,37 @@ from charm.toolbox.pairinggroup import PairingGroup
 GLOBAL_GROUP = PairingGroup('SS512')
 
 class ECDSAUtils:
-    def __init__(self, manufacture_private_key_path, manufacture_public_key_path):
+    def __init__(self, manufacture_public_key_path, manufacture_private_key_path=None):
         """
-        - manufacture_private_key_path: 제조사 개인 키 파일 경로 (SKmi)
-        - manufacture_public_key_path: 제조사 공개 키 파일 경로 (PKmi)
+        - manufacture_public_key_path: 제조사 공개 키 파일 경로 (PKmi) (필수)
+        - manufacture_private_key_path: 제조사 개인 키 파일 경로 (SKmi) (서명 시 필수)
         """
         self.manufacture_private_key_path = manufacture_private_key_path
         self.manufacture_public_key_path = manufacture_public_key_path
 
-        # 키 로드 또는 생성
+        # 키 로드
         self.load_keys()
 
     def load_keys(self):
         """제조사 개인 키 및 공개 키를 파일에서 로드"""
         try:
-            with open(self.manufacture_private_key_path, "rb") as f:
-                self.manufacture_signing_key = SigningKey.from_pem(f.read())
+            # 공개 키 로드 (필수)
             with open(self.manufacture_public_key_path, "rb") as f:
                 self.manufacture_verifying_key = VerifyingKey.from_pem(f.read())
-            print("제조사 Skmi, Pkmi 로드 완료")
+            print("제조사 공개 키(Pkmi) 로드 완료")
         except FileNotFoundError:
-            print("제조사 키 파일이 존재하지 않습니다.")
+            print("공개 키 파일이 존재하지 않습니다. 서명 검증을 수행할 수 없습니다.")
             exit()
+
+        # 개인 키는 선택 사항 (서명 기능이 필요할 때만 로드)
+        self.manufacture_signing_key = None
+        if self.manufacture_private_key_path:
+            try:
+                with open(self.manufacture_private_key_path, "rb") as f:
+                    self.manufacture_signing_key = SigningKey.from_pem(f.read())
+                print("✅ 제조사 개인 키(Skmi) 로드 완료")
+            except FileNotFoundError:
+                print("❌ 개인 키 파일이 존재하지 않습니다. 서명 기능을 사용할 수 없습니다.")
 
     @staticmethod
     def serialize_message(message):
@@ -58,14 +67,15 @@ class ECDSAUtils:
 
         return json.loads(message_json, object_hook=decode_custom)
 
-    # ECDSA를 이용해 um에 대한 서명 생성
     def sign_signature(self, message):
         """메시지를 서명하여 Base64로 인코딩된 서명 값 반환"""
+        if self.manufacture_signing_key is None:
+            raise ValueError("개인 키가 없어 서명 기능을 사용할 수 없습니다. (private key 필요)")
+
         message_json = self.serialize_message(message)
         signature = self.manufacture_signing_key.sign(message_json)
         return base64.b64encode(signature).decode()
 
-    # ECDSA를 이용해 um에 대한 서명 검증
     def verify_signature(self, message, signature):
         """서명을 검증하여 유효성 여부 반환 (True / False)"""
         message_json = self.serialize_message(message)

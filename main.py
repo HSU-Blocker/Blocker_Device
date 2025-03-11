@@ -19,18 +19,18 @@ USER_ATTRIBUTES = ["ATTR1", "ATTR2", "ATTR4"]
 POLICY = "((ATTR1 and ATTR2) or (ATTR3 and ATTR4))"
 
 # 파일 경로 설정 (main에서 파라미터로 전달)
-ORIGINAL_FILE = "data/original_data.bin"
-ENCRYPTED_AES_FILE = "data/encrypted_data.enc"
-DECRYPTED_AES_FILE = "data/decrypted_data.bin"
+ORIGINAL_FILE_PATH = "data/original_data.bin"
+ENCRYPTED_AES_FILE_PATH = "data/encrypted_data.enc"
+DECRYPTED_AES_FILE_PATH = "data/decrypted_data.bin"
 
 # 제조사 개인키 & 공개키 pem 파일 경로 설정 (main에서 파라미터로 전달)
-manufacture_private_key = "pem/manufacture_private_key.pem"
-manufacture_public_key = "pem/manufacture_public_key.pem" 
+MANUFACTURE_PRIVATE_KEY_PATH = "pem/manufacture_private_key.pem"
+MANUFACTURE_PUBLIC_KEY_PATH = "pem/manufacture_public_key.pem" 
 
 def main():
 
     # 제조사 공개키 PKmi, 개인키 Skmi 생성
-    keygen(manufacture_private_key, manufacture_public_key)
+    keygen(MANUFACTURE_PRIVATE_KEY_PATH, MANUFACTURE_PUBLIC_KEY_PATH)
 
     """
     1. AES + CP-ABE 암호화를 수행하고
@@ -39,22 +39,20 @@ def main():
     # 암호화 (제조업체)
     # SKd는 디바이스에서도 필요하기 때문에 전달해놓아야 함
     print("\nAES & CP-ABE 암호화 수행")
-    encrypted_kbj, device_secret_key = encrypt_and_store(USER_ATTRIBUTES, POLICY, ORIGINAL_FILE, ENCRYPTED_AES_FILE)
+    encrypted_kbj, device_secret_key = encrypt_and_store(USER_ATTRIBUTES, POLICY, ORIGINAL_FILE_PATH, ENCRYPTED_AES_FILE_PATH)
 
     if not encrypted_kbj:
         print("암호화 실패.")
         return
 
     # 제조사에서 업데이트 메시지 생성 및 서명 생성
-    ecdsa = ECDSAUtils(manufacture_private_key, manufacture_public_key)
+    ecdsa = ECDSAUtils(MANUFACTURE_PUBLIC_KEY_PATH, MANUFACTURE_PRIVATE_KEY_PATH)
     sha3 = SHA3Utils()
-    sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
+    sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE_PATH, encrypted_kbj) # 아직 블록체인 업로드 연동 x
 
 
     ## IoT 기기에서 서명 검증
-    device_ecdsa = ECDSAUtils(private_key_path=None,  # 디바이스에서는 개인 키 불필요
-                          public_key_path=manufacture_public_key)
-
+    device_ecdsa = ECDSAUtils(pMANUFACTURE_PUBLIC_KEY_PATH)  # 디바이스에서는 서명 검증을 하기 때문에 개인 키 불필요
     is_valid = device_ecdsa.verify_signature(update_message, signature)
     print(f"IoT 기기에서의 서명 검증 여부: ", is_valid)
 
@@ -64,7 +62,7 @@ def main():
     cpabe, group, public_key = cpabe_init.get_cpabe_objects()
 
     print("\nAES & CP-ABE 복호화 수행")
-    result = decrypt_and_retrieve(encrypted_kbj, device_secret_key, ENCRYPTED_AES_FILE, DECRYPTED_AES_FILE, cpabe, group, public_key)
+    result = decrypt_and_retrieve(encrypted_kbj, device_secret_key, ENCRYPTED_AES_FILE_PATH, DECRYPTED_AES_FILE_PATH, cpabe, group, public_key)
 
     if result:
         print("복호화 프로세스 성공")
