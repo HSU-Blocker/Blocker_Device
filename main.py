@@ -65,7 +65,7 @@ def main():
     device_ecdsa = ECDSAUtils(MANUFACTURE_PUBLIC_KEY_PATH)  # 디바이스에서는 서명 검증을 하기 때문에 개인 키 불필요
     is_valid = device_ecdsa.verify_signature(update_message, signature) # 실제로는 파라미터에 블록체인에서 다운 받은 um, 서명 넣기
     print(f"IoT 디바이스에서의 서명 검증 여부: ", is_valid)
-    if(is_valid == False)
+    if(is_valid == False):
         exit()
 
     # um 에서 암호화된 데이터 파일의 해시값, 암호화된 kbj 다운
@@ -76,7 +76,7 @@ def main():
     # 일단 IPFS 제외하고 암호화된 파일의 경로를 파라미터로
     is_match = sha3.verify_sha3_hash(hEbj, ENCRYPTED_AES_FILE_PATH)
     print(f"IoT 디바이스에서 hEBJ & IPFS에서 다운 받은 파일 해시 값 비교 여부: ", is_match)
-    if(is_match == False)
+    if(is_match == False):
         exit()
 
     # 디바이스에서 복호화 수행 
