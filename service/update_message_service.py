@@ -61,21 +61,4 @@ def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data_pat
     # })
 
     # return result
-
-def get_uid(update_message):
-    """
-    업데이트 메시지에서 UID 값을 가져오는 함수
-    """
-    return update_message.get("UID", None)
-
-def get_he_bj(update_message):
-    """
-    업데이트 메시지에서 hEbj 값을 가져오는 함수 (SHA3 해시)
-    """
-    return update_message.get("hEbj", None)
-
-def get_encrypted_kbj(update_message):
-    """
-    업데이트 메시지에서 암호화된 kbj 값을 가져오는 함수
-    """
-    return update_message.get("encrypted_kbj", None)
+    
