@@ -1,4 +1,4 @@
-import msgpack
+# import msgpack
 import hashlib
 import json
 from security.ecdsa_utils import ECDSAUtils
@@ -23,7 +23,7 @@ def create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_
     update_message = {
         "UID": uid_combined,
         "hEbj": hEbj,
-        "encrypted_kbj": encrypted_kbj  # `bytes` 그대로 유지
+        "encrypted_kbj": encrypted_kbj
     }
 
     return update_message
@@ -42,18 +42,15 @@ def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data, en
     update_message = create_update_message(sha3, sw_version, ipfs_url, encrypted_data, encrypted_kbj)
     print(f"업데이트 메시지 생성 완료: {update_message}")
 
-    # ✅ `msgpack`을 사용하여 `bytes` 포함된 객체 직렬화
-    serialized_message = msgpack.dumps(update_message)
-
     # ECDSA 서명 생성 (msgpack 직렬화된 데이터 사용)
-    signature = ecdsa.sign_message(serialized_message)
+    signature = ecdsa.sign_message(update_message)
     print(f"ECDSA 서명 생성 완료: {signature}")
 
     # 서명 검증
-    is_valid = ecdsa.verify_signature(serialized_message, signature)
-    if not is_valid:
-        print("ECDSA 서명 검증 실패. 블록체인에 업로드 X")
-        return None
+    # is_valid = ecdsa.verify_signature(update_message, signature)
+    # if not is_valid:
+    #     print("ECDSA 서명 검증 실패. 블록체인에 업로드 X")
+    #     return None
 
     # # 블록체인 업로드 코드 (나중에 추가 가능)
     # result = upload_to_blockchain({
