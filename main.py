@@ -50,6 +50,14 @@ def main():
     sha3 = SHA3Utils()
     sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
 
+
+    ## IoT 기기에서 서명 검증
+    device_ecdsa = ECDSAUtils(private_key_path=None,  # 디바이스에서는 개인 키 불필요
+                          public_key_path=manufacture_public_key)
+
+    is_valid = device_ecdsa.verify_signature(update_message, signature)
+    print(f"IoT 기기에서의 서명 검증 여부: ", is_valid)
+
     # 복호화 (디바이스)
     # CP-ABE 객체 및 페어링 그룹 가져오기 (복호화에서 필요)
     cpabe_init = CPABEInit()

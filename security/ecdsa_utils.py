@@ -4,7 +4,7 @@ import os
 from ecdsa import SigningKey, VerifyingKey, NIST256p
 from charm.toolbox.pairinggroup import PairingGroup
 
-# ✅ 전역적으로 PairingGroup 객체 생성
+# 전역적으로 PairingGroup 객체 생성
 GLOBAL_GROUP = PairingGroup('SS512')
 
 class ECDSAUtils:
@@ -58,12 +58,14 @@ class ECDSAUtils:
 
         return json.loads(message_json, object_hook=decode_custom)
 
-    def sign_message(self, message):
+    # ECDSA를 이용해 um에 대한 서명 생성
+    def sign_signature(self, message):
         """메시지를 서명하여 Base64로 인코딩된 서명 값 반환"""
         message_json = self.serialize_message(message)
         signature = self.manufacture_signing_key.sign(message_json)
         return base64.b64encode(signature).decode()
 
+    # ECDSA를 이용해 um에 대한 서명 검증
     def verify_signature(self, message, signature):
         """서명을 검증하여 유효성 여부 반환 (True / False)"""
         message_json = self.serialize_message(message)

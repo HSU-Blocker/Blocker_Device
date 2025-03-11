@@ -43,7 +43,7 @@ def sign_and_upload_update(ecdsa, sha3, sw_version, ipfs_url, encrypted_data, en
     print(f"업데이트 메시지 생성 완료: {update_message}")
 
     # ECDSA 서명 생성 
-    signature = ecdsa.sign_message(update_message)
+    signature = ecdsa.sign_signature(update_message)
     print(f"ECDSA 서명 생성 완료: {signature}")
 
     # 서명 검증
