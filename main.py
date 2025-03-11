@@ -47,8 +47,7 @@ def main():
     # 제조사에서 업데이트 메시지 생성 및 서명 생성
     ecdsa = ECDSAUtils(manufacture_private_key, manufacture_public_key)
     sha3 = SHA3Utils()
-    update_message_service = UpdateMessageService(ecdsa, sha3)
-    update_message_service.sign_and_upload_update("1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
+    update_message_service.sign_and_upload_update(ecdsa, sha3, "1.0.0", "ipfs_url", ENCRYPTED_AES_FILE, encrypted_kbj) # 아직 블록체인 업로드 연동 x
 
     # 복호화 (디바이스)
     # CP-ABE 객체 및 페어링 그룹 가져오기 (복호화에서 필요)
@@ -61,7 +60,7 @@ def main():
     if result:
         print("복호화 프로세스 성공")
     else:
-    #     print("복호화 실패.")
+        print("복호화 실패.")
 
 if __name__ == "__main__":
     main()
