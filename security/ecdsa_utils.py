@@ -28,19 +28,15 @@ class ECDSAUtils:
             print("제조사 키 파일이 존재하지 않습니다.")
             exit()
 
-    # ECDSA 서명
+    # ECDSA 서명 (Base64 없이 `bytes` 반환)
     def sign_message(self, message):
-        """메시지를 서명하여 Base64로 인코딩된 서명 값 반환"""
         message_json = json.dumps(message, sort_keys=True).encode()
-        signature = self.manufacture_signing_key.sign(message_json)
-        return base64.b64encode(signature).decode()
+        return self.manufacture_signing_key.sign(message_json)  # ✅ `bytes` 그대로 반환
 
-    # ECDSA 서명 검증
+    # ECDSA 서명 검증 (Base64 없이 `bytes` 그대로 검증)
     def verify_signature(self, message, signature):
-        """서명을 검증하여 유효성 여부 반환 (True / False)"""
         message_json = json.dumps(message, sort_keys=True).encode()
-        signature_bytes = base64.b64decode(signature)
         try:
-            return self.manufacture_verifying_key.verify(signature_bytes, message_json)
+            return self.manufacture_verifying_key.verify(signature, message_json)  # ✅ `bytes` 검증
         except Exception:
             return False
