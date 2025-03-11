@@ -4,9 +4,12 @@ from security.ecdsa_utils import ECDSAUtils
 from security.sha3_utils import SHA3Utils
 from distributed_storage.blockchain_utils import upload_to_blockchain  # 블록체인 저장 함수
 
+# [제조사 용] 업데이트 메시지 생성 & 서명 및 블록체인에 업로드
 class UpdateMessage:
     def __init__(self):
-        self.ecdsa = ECDSAUtils(generate_new=True)  # 강제 새 키 생성
+        self.ecdsa = ECDSAUtils(private_key_path="manufacturer_private.pem",
+                                public_key_path="manufacturer_public.pem",
+                                generate_new=False)  # 제조사 서명용
         self.sha3 = SHA3Utils()  # SHA3 모듈 사용
 
     # 업데이트 메시지 생성
@@ -21,7 +24,7 @@ class UpdateMessage:
         update_message = {
             "UID": uid_combined,
             "hEbj": hEbj,
-            "Ea_kbj": encrypted_kbj
+            "encrypted_kbj": encrypted_kbj # CP-ABE로 암호화된 kbj
         }
 
         return update_message
