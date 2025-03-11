@@ -6,10 +6,10 @@ from keygen import keygen;
 # 현재 경로를 기준으로 service 폴더 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "service")))
 
-# from encrypt_service import encrypt_and_store
-# from decrypt_service import decrypt_and_retrieve
-# from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
-from update_message_service import UpdateMessage
+from encrypt_service import encrypt_and_store
+from decrypt_service import decrypt_and_retrieve
+from crypto.cpabe_init import CPABEInit  # CP-ABE 시스템 가져오기
+from update_message_service import sign_and_upload_update
 from security.ecdsa_utils import ECDSAUtils
 from security.sha3_utils import SHA3Utils
 
