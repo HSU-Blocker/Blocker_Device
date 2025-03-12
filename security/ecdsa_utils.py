@@ -67,14 +67,14 @@ class ECDSAUtils:
 
         return json.loads(message_json, object_hook=decode_custom)
 
-    def sign_signature(self, message):
-        """메시지를 서명하여 Base64로 인코딩된 서명 값 반환"""
-        if self.manufacture_signing_key is None:
-            raise ValueError("개인 키가 없어 서명 기능을 사용할 수 없습니다. (private key 필요)")
+    # def sign_signature(self, message):
+    #     """메시지를 서명하여 Base64로 인코딩된 서명 값 반환"""
+    #     if self.manufacture_signing_key is None:
+    #         raise ValueError("개인 키가 없어 서명 기능을 사용할 수 없습니다. (private key 필요)")
 
-        message_json = self.serialize_message(message)
-        signature = self.manufacture_signing_key.sign(message_json)
-        return base64.b64encode(signature).decode()
+    #     message_json = self.serialize_message(message)
+    #     signature = self.manufacture_signing_key.sign(message_json)
+    #     return base64.b64encode(signature).decode()
 
     def verify_signature(self, message, signature):
         """서명을 검증하여 유효성 여부 반환 (True / False)"""
