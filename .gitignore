@@ -1,22 +1,78 @@
 # Python 관련
-__pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.egg
 *.egg-info/
-dist/
-build/
+__pycache__/
+*$py.class
 
 # 가상환경 폴더
 .venv/
 venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
 # 환경설정(민감정보) 파일
 config.py
+.env
 
 # OS/IDE 관련
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+
+# 빌드 관련 파일
+.Python
+build/
+dist/
+downloads/
+develop-eggs/
+sdist/
+wheels/
+.installed.cfg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Django & Flask 관련
+*.log
+local_settings.py
+instance/
+.webassets-cache
+db.sqlite3
+db.sqlite3-journal
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mypy, Pytype, Pyre (Python 타입 체크)
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Spyder, Rope 설정
+.spyderproject
+.spyproject
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# pipenv, poetry, pdm
+Pipfile.lock
+poetry.lock
+pdm.lock
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PyCharm
+# JetBrains.gitignore을 참고
+#.idea/
