@@ -10,6 +10,9 @@ class BlockChainService:
         :param rpc_url: 블록체인 RPC URL (Hardhat 노드 등)
         :param contract_address: 배포된 SoftwareUpdateManager 컨트랙트 주소
         :param abi_path: ABI JSON 파일 경로
+        !! 고려해볼것
+        블록체인 RPC만으로 가능한 작업 (스마트 컨트랙트 주소 필요 없음)
+        블록체인 RPC는 노드와 직접 통신하는 인터페이스이기 때문에, 기본적인 블록체인 데이터 조회(read) 작업은 가능함.
         """
         self.w3 = Web3(Web3.WebsocketProvider(rpc_url))  # WebSocket으로 연결
         if not self.w3.isConnected():

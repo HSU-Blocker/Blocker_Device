@@ -8,7 +8,7 @@ class IPFSClient:
         """
         self.gateway_url = gateway_url
 
-    def download_file(self, cid, target_path="update.enc"):
+    def download_file(self, cid, target_path):
         """
         IPFS에서 CID를 사용하여 파일을 다운로드하여 target_path에 저장.
         """

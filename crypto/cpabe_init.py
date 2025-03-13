@@ -25,7 +25,7 @@ class CPABEInit:
         """사용자 속성 기반 개인 키 생성"""
         try:
             device_secret_key = self._cpabe.keygen(self._public_key, self._master_key, attributes)
-            return device_secret_key
+            return device_secret_key # device 내장하기 위해 여기서 나온 개인키 일단 저장 
         except Exception as e:
             print(f"CP-ABE 키 생성 실패: {e}")
             return None
