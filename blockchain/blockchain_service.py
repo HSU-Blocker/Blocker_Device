@@ -1,32 +1,35 @@
 import json
 import asyncio
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
+import logging
+from web3 import AsyncWeb3
+from web3.providers.persistent import WebSocketProvider
 
 class BlockChainService:
     def __init__(self, rpc_url: str, contract_address: str, abi_path="contract_abi.json"):
         """
-        Web3 Provider 연결
-        :param rpc_url: 블록체인 RPC URL (Hardhat 노드 등)
+        WebSocket Provider를 통한 비동기 블록체인 서비스 초기화
+        :param rpc_url: 블록체인 WebSocket URL
         :param contract_address: 배포된 SoftwareUpdateManager 컨트랙트 주소
         :param abi_path: ABI JSON 파일 경로
         !! 고려해볼것
         블록체인 RPC만으로 가능한 작업 (스마트 컨트랙트 주소 필요 없음)
         블록체인 RPC는 노드와 직접 통신하는 인터페이스이기 때문에, 기본적인 블록체인 데이터 조회(read) 작업은 가능함.
         """
-        self.w3 = Web3(Web3.WebsocketProvider(rpc_url))  # WebSocket으로 연결
-        if not self.w3.isConnected():
-            raise Exception(f"블록체인 노드({rpc_url})에 연결할 수 없습니다.")
+        self.logger = logging.getLogger("BlockChainService")
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging.StreamHandler())
 
-        # ABI 로드
+        # ✅ WebSocket을 통한 AsyncWeb3 연결
+        self.w3 = AsyncWeb3(WebSocketProvider(rpc_url))
+
+        # WebSocket 연결 확인
+        if not asyncio.run(self.w3.is_connected()):
+            raise Exception(f"블록체인 WebSocket({rpc_url})에 연결할 수 없습니다.")
+
+        # json에서 ABI만 로드
         with open(abi_path, "r") as f:
-            abi = json.load(f)
-            
-        # if not os.path.exists(abi_path):
-        #     raise FileNotFoundError(f"ABI 파일({abi_path})이 존재하지 않습니다.")
-        # with open(abi_path, "r") as f:
-        #     abi = json.load(f)
-        
+            abi = json.load(f).get("abi", [])
+
         # 스마트 컨트랙트 설정
         self.contract = self.w3.eth.contract(address=contract_address, abi=abi)
 
@@ -36,22 +39,26 @@ class BlockChainService:
         """
         print("[BlockChainService] 블록체인 업데이트 이벤트 대기 중...")
 
-        event_filter = self.contract.events.UpdateRegistered.create_filter(fromBlock="latest")
+        # 스마트 컨트랙트 이벤트 구독 (UpdateRegistered 이벤트 감지)
+        subscription_id = await self.w3.eth.subscribe("logs", {
+            "address": self.contract.address
+        })
+        print(f"🛰 이벤트 구독 시작 (subscription_id: {subscription_id})")
 
-        # Web3 Listener를 통해 이벤트 스트리밍
-        while True:
-            try:
-                for event in event_filter.get_new_entries():
-                    update_uid = event["args"]["uid"]
-                    print(f"🔔 새 업데이트 감지! UID: {update_uid}")
+        try:
+            async for event in self.w3.socket.process_subscriptions():
+                print(f"🔔 새 업데이트 이벤트 감지: {event}")
 
-                    # 업데이트 실행
-                    await update_manager.perform_update(update_uid)
+                # 이벤트에서 UID 가져오기
+                update_uid = event["args"]["uid"]
+                print(f"🔍 업데이트 UID: {update_uid}")
 
-                await asyncio.sleep(0.1)  # 시스템 부담 최소화
-            except Exception as e:
-                print(f"⚠ Web3 Listener 오류 발생: {e}")
-                await asyncio.sleep(1)  # 오류 발생 시 1초 대기 후 재시도
+                # 업데이트 실행
+                await update_manager.perform_update(update_uid)
+
+        except Exception as e:
+            print(f"⚠ Web3 Listener 오류 발생: {e}")
+            await asyncio.sleep(1)  # 오류 발생 시 1초 대기 후 재시도
 
     def get_update_metadata(self, uid: str):
         """
