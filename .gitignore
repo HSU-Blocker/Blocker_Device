@@ -18,6 +18,7 @@ venv.bak/
 # 환경설정(민감정보) 파일
 config.py
 .env
+contract_abi.json
 
 # OS/IDE 관련
 .DS_Store
