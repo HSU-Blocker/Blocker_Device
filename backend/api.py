@@ -1,12 +1,17 @@
 import eventlet
 eventlet.monkey_patch()
-from blockchain.notification.notification import BlockchainNotifier
-from iot_device.client.device_client import IoTDeviceClient
 
-from flask import Flask, jsonify, request, send_from_directory, Response
-from flask_socketio import SocketIO
 import os
 import sys
+
+# 프로젝트 루트 디렉토리 추가 (Docker 환경 고려)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(project_root)
+
+from client.device_client import IoTDeviceClient
+from flask import Flask, jsonify, request, send_from_directory, Response
+from flask_socketio import SocketIO
 import logging
 import asyncio
 import json
@@ -20,11 +25,6 @@ from pathlib import Path
 # IPFS 다운로더 및 Hash 도구 추가
 from ipfs.download.download import IPFSDownloader
 from crypto.hash.hash import HashTools
-
-# 프로젝트 루트 디렉토리 추가
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
 
 # 환경 변수 로드
 load_dotenv()

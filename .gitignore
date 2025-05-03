@@ -18,7 +18,6 @@ venv.bak/
 # 환경설정(민감정보) 파일
 config.py
 .env
-contract_abi.json
 
 # OS/IDE 관련
 .DS_Store
@@ -77,3 +76,43 @@ pdm.lock
 # PyCharm
 # JetBrains.gitignore을 참고
 #.idea/
+
+# Blockchain 관련
+*.pem
+*.key
+wallet/
+node_modules/
+blockchain/private/
+*_address.json
+*.bin
+
+# Docker 관련
+.docker/
+docker-compose.override.yml
+*.env
+.env.*
+.dockerignore
+
+# IPFS 관련
+.ipfs/
+ipfs/download/temp/
+ipfs/download/cache/
+
+# 보안 관련
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+keys/
+private/
+secrets/
+
+# 기타
+*.bak
+*.swp
+*.swo
+logs/
+tmp/
+temp/

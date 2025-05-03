@@ -52,8 +52,8 @@ class IoTDeviceClient:
         self.notification_callback = notification_callback
 
         # 웹3 연결 설정
-        self.web3_socket_provider = os.getenv("WEB3_WS_PROVIDER", "ws://ganache:8545")
-        self.web3_http_provider = os.getenv("WEB3_PROVIDER", "http://ganache:8545")
+        self.web3_socket_provider = os.getenv("WEB3_WS_PROVIDER")
+        self.web3_http_provider = os.getenv("WEB3_PROVIDER")
         self.owner_address = os.getenv("OWNER_ADDRESS")
         self.owner_private_key = os.getenv("OWNER_PRIVATE_KEY")
 
@@ -82,11 +82,9 @@ class IoTDeviceClient:
         self.cpabe = DynamicCPABE()
         self.group = self.cpabe.group
 
-        # 키 로드
-        # self._load_keys()
-
-        # 스마트 컨트랙트 로드
-        #self._load_contract()
+        # 레지스트리 및 컨트랙트 객체
+        self.contract_http = None
+        self.contract_socket = None
 
         # 업데이트 폴더 설정
         self.update_dir = os.path.join(os.path.dirname(__file__), "updates")
@@ -129,29 +127,51 @@ class IoTDeviceClient:
             logger.error(f"키 로드 중 오류 발생: {e}")
 
     async def _load_contract(self):
+        """컨트랙트 직접 로드"""
         try:
-            # 컨트랙트 주소와 ABI 로드
-            address_path = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            # 1. 업데이트 컨트랙트 설정 파일 로드
+            contract_file_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
                 "blockchain",
-                "contract_address.txt",
+                "contract_address.json"
             )
+            
+            if not os.path.exists(contract_file_path):
+                raise FileNotFoundError(f"업데이트 컨트랙트 설정 파일을 찾을 수 없습니다: {contract_file_path}")
 
-            if not os.path.exists(address_path):
-                raise FileNotFoundError(
-                    f"컨트랙트 주소 파일을 찾을 수 없습니다: {address_path}"
+            with open(contract_file_path, "r") as f:
+                contract_data = json.load(f)
+
+            if not isinstance(contract_data, dict) or "abi" not in contract_data or "address" not in contract_data:
+                raise ValueError("업데이트 컨트랙트 파일 포맷이 잘못되었습니다")
+
+            # 2. 업데이트 컨트랙트 주소와 ABI 가져오기
+            update_contract_address = self.web3_http.to_checksum_address(contract_data["address"])
+            contract_abi = contract_data["abi"]
+
+            if not isinstance(contract_abi, list):
+                raise ValueError("ABI must be a list")
+
+            logger.info(f"컨트랙트 주소: {update_contract_address}")
+            logger.info(f"ABI 타입: {type(contract_abi)}")
+
+            # 3. 컨트랙트 객체 생성
+            try:
+                self.contract_http = self.web3_http.eth.contract(
+                    address=update_contract_address,
+                    abi=contract_abi
                 )
+                
+                self.contract_socket = self.web3_socket.eth.contract(
+                    address=update_contract_address,
+                    abi=contract_abi
+                )
+                
+                logger.info(f"스마트 컨트랙트 로드 완료 - 업데이트 컨트랙트 주소: {update_contract_address}")
 
-            with open(address_path, "r") as f:
-                contract_data = json.loads(f.read())
-
-            contract_address = contract_data["address"]
-            abi = contract_data["abi"]
-
-            # 컨트랙트 객체 생성
-            self.contract_http = self.web3_http.eth.contract(address=contract_address, abi=abi)
-            self.contract_socket = self.web3_socket.eth.contract(address=contract_address, abi=abi) # 비동기용
-            logger.info(f"스마트 컨트랙트 로드 완료 - 주소: {contract_address}")
+            except Exception as e:
+                logger.error(f"컨트랙트 객체 생성 실패: {e}")
+                raise Exception(f"컨트랙트 객체 생성에 실패했습니다: {e}")
 
         except Exception as e:
             logger.error(f"컨트랙트 로드 실패: {e}")
@@ -162,8 +182,7 @@ class IoTDeviceClient:
 
             try:
                 if not await self.web3_socket.is_connected():
-                    logger.error(f"[listen_for_updates] WebSocket 연결 실패: {self.web3_socket_provider}")
-                    return
+                    raise Exception("WebSocket 연결이 되어있지 않습니다")
 
                 # 새 블록 구독
                 subscription_id = await self.web3_socket.eth.subscribe("newHeads")
@@ -171,10 +190,7 @@ class IoTDeviceClient:
 
                 # 새 블록 수신 루프
                 async for response in self.web3_socket.socket.process_subscriptions():
-                    logger.info(f"[listen_for_updates] 새 블록 감지: {response}")
-                    block_hash = response["result"]["hash"] # 해당 블록의 고유 식별자
-
-                    # 해당 블록에서 업데이트 이벤트 감지 시도
+                    block_hash = response["result"]["hash"]
                     await self.check_for_updates_in_block(block_hash)
 
             except Exception as e:
