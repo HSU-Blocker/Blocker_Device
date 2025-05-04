@@ -73,21 +73,15 @@ static_folder = os.path.join(os.path.dirname(current_dir), "frontend")
 # 업데이트 이력 (In-memory 저장소)
 update_history = []
 
-# Websocket 대신 사용할 SSE 클라이언트 목록 >>?
-# clients = []
-
-
 @app.route("/")
 def index():
     """프론트엔드 인덱스 페이지 제공"""
     return send_from_directory(static_folder, "index.html")
 
-
 @app.route("/<path:path>")
 def static_files(path):
     """정적 파일 제공"""
     return send_from_directory(static_folder, path)
-
 
 @app.route("/api/device/info", methods=["GET"])
 def get_device_info():
@@ -105,7 +99,6 @@ def get_device_info():
         }
     )
 
-
 @app.route("/api/device/connection", methods=["GET"])
 def check_connection():
     """블록체인 연결 상태 확인"""
@@ -119,7 +112,6 @@ def check_connection():
         logger.error(f"블록체인 연결 확인 중 오류: {e}")
         return jsonify({"connected": False, "error": str(e)}), 500
 
-
 @app.route("/api/device/updates", methods=["GET"])
 def check_updates():
     if not device:
@@ -130,7 +122,6 @@ def check_updates():
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
         return jsonify({"updates": [], "error": str(e)}), 500
-
 
 # 디바이스 클라이언트 인스턴스를 반환하는 함수 추가
 def get_device_client():
@@ -147,7 +138,6 @@ def get_device_client():
             return None
     return device
 
-
 # 업데이트가 이미 설치되었는지 확인하는 함수 추가
 def is_update_installed(uid):
     """업데이트가 이미 설치되었는지 확인"""
@@ -155,64 +145,6 @@ def is_update_installed(uid):
         if history_item.get("uid") == uid:
             return True
     return False
-
-
-@app.route("/api/device/notifications/stream")
-def notification_stream():
-    def generate():
-        yield 'data: {"type": "connected", "message": "스트림 연결 성공"}\n\n'
-
-        # BlockchainNotifier 대신 device_client 직접 사용
-        previous_updates = set()
-        while True:
-            try:
-                # device_client를 사용하여 업데이트 확인
-                device_client = get_device_client()
-                if device_client:
-                    updates = device_client.check_for_updates_http()
-
-                    # 에러 업데이트 필터링 추가
-                    valid_updates = (
-                        [u for u in updates if not u.get("isError", False)]
-                        if updates
-                        else []
-                    )
-
-                    # 새 업데이트가 있는지 확인
-                    current_updates = (
-                        set(update["uid"] for update in valid_updates)
-                        if valid_updates
-                        else set()
-                    )
-                    new_updates = current_updates - previous_updates
-
-                    if new_updates:
-                        for uid in new_updates:
-                            update = next(
-                                (u for u in valid_updates if u["uid"] == uid), None
-                            )
-                            if update:
-                                logger.info(
-                                    f"새 업데이트 알림: {uid}, 버전: {update.get('version')}"
-                                )
-                                yield f'data: {{"type": "new_update", "uid": "{uid}", "version": "{update.get("version", "")}", "description": "{update.get("description", "")}" }}\n\n'
-
-                        previous_updates = current_updates
-
-                # 이벤트 전송 간격
-                time.sleep(5)
-
-                # 연결 유지를 위한 하트비트
-                yield 'data: {"type": "heartbeat"}\n\n'
-
-            except Exception as e:
-                logger.error(f"알림 스트림 오류: {e}")
-                # 오류 메시지 대신 하트비트만 전송하여 클라이언트 연결 유지
-                yield 'data: {"type": "heartbeat"}\n\n'
-                time.sleep(5)
-
-    return Response(generate(), mimetype="text/event-stream")
-
 
 @app.route("/api/device/updates/purchase", methods=["POST"])
 def purchase_update():    
@@ -240,7 +172,6 @@ def purchase_update():
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/api/device/updates/install", methods=["POST"])
 def install_update():
@@ -289,23 +220,19 @@ def install_update():
     except Exception as e:
         logger.error(f"업데이트 설치 중 오류: {e}")
         import traceback
-
         logger.error(traceback.format_exc())
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 @app.route("/api/device/history", methods=["GET"])
 def get_update_history():
     """업데이트 이력 조회"""
     return jsonify({"history": update_history})
 
-
 def get_last_update():
     """마지막 업데이트 정보 조회"""
     if update_history:
         return update_history[-1]
     return None
-
 
 def add_update_history(uid, version, description="설명 없음", tx_hash="unknown"):
     """업데이트 이력 추가 - 개선된 버전"""
@@ -319,48 +246,6 @@ def add_update_history(uid, version, description="설명 없음", tx_hash="unkno
         }
     )
     logger.info(f"업데이트 이력에 추가됨: {uid}, 버전 {version}")
-
-
-# @app.route("/api/device/events", methods=["GET"])
-# def events():
-#     """Server-Sent Events 엔드포인트"""
-
-#     def stream():
-#         yield 'data: {"message": "연결됨"}\n\n'
-
-#         # 클라이언트 연결 유지
-#         while True:
-#             time.sleep(10)
-#             yield 'data: {"keepalive": true}\n\n'
-
-#     return Response(stream(), mimetype="text/event-stream")
-
-
-# def send_notification(message):
-#     """모든 클라이언트에게 알림 전송"""
-#     if clients:
-#         for client in clients[:]:
-#             try:
-#                 client.put(message)
-#             except:
-#                 clients.remove(client)
-
-
-# 이벤트 리스너 시작
-# if device:
-
-#     def update_notification_handler(uid, version, description):
-#         send_notification(
-#             {
-#                 "type": "update_available",
-#                 "uid": uid,
-#                 "version": version,
-#                 "description": description,
-#             }
-#         )
-
-#     device.start_update_listener(callback=update_notification_handler)
-
 
 if __name__ == "__main__":
     import eventlet
@@ -377,15 +262,3 @@ if __name__ == "__main__":
     # eventlet용 green thread에서 실행
     threading.Thread(target=run_socketio).start()
     eventlet.spawn(asyncio.run, websocket_listener())
-
-# if __name__ == "__main__":
-#     async def init_websocket_listener():
-#         await device._init_async_web3_socket_()
-#         # device._load_contract()
-#         await device.listen_for_updates()
-    
-#     loop = asyncio.new_event_loop()
-#     threading.Thread(target=lambda: socketio.run(app, host="0.0.0.0", port=PORT, use_reloader=False), daemon=True).start()
-#     asyncio.set_event_loop(loop)
-#     loop.run_until_complete(init_websocket_listener())
-#     loop.run_forever()
