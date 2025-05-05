@@ -7,6 +7,7 @@ import logging
 import pickle
 from base64 import b64encode, b64decode
 from hashlib import sha256
+import base64
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -17,24 +18,6 @@ class CPABETools:
         self.cpabe = CPabe_BSW07(self.group)
         self.charm_installed = True
         logger.info("Charm-crypto 라이브러리 로드 성공. CP-ABE 기능 활성화됨.")
-
-    def setup(self, public_key_file, master_key_file):
-        try:
-            (pk, mk) = self.cpabe.setup()
-            serialized_pk = {k: self.group.serialize(v).decode("latin1") for k, v in pk.items()}
-            serialized_mk = {k: self.group.serialize(v).decode("latin1") for k, v in mk.items()}
-
-            with open(public_key_file, "w") as f:
-                json.dump(serialized_pk, f)
-            with open(master_key_file, "w") as f:
-                json.dump(serialized_mk, f)
-
-            logger.info(f"CP-ABE 키 생성 및 저장 완료")
-            return True
-        
-        except Exception as e:
-            logger.error(f"CP-ABE 시스템 초기화 실패: {e}")
-            return False
 
     def decrypt(self, encrypted_key_json, public_key, device_secret_key):
         try:
@@ -65,6 +48,12 @@ class CPABETools:
         except Exception as e:
             logger.error(f"CP-ABE 복호화 실패: {e}")
             return None
+
+    def load_public_key(self, public_key_file):
+        with open(public_key_file, "r") as f:
+            serialized_pk = json.load(f)
+        pk = {k: self.group.deserialize(v.encode("latin1")) for k, v in serialized_pk.items()}
+        return pk
 
     def load_device_secret_key(self, device_secret_key_file):
         with open(device_secret_key_file, "rb") as f:

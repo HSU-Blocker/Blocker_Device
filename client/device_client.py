@@ -32,7 +32,7 @@ load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-DEVICE_SECRET_KEY_FOLDER = os.path.join(current_dir, "keys") #SKd 저장 폴더
+KEY_DIR = os.path.join(current_dir, "keys") #SKd 저장 폴더
 
 class IoTDeviceClient:
     """IoT 기기 소프트웨어 업데이트 클라이언트"""
@@ -114,8 +114,20 @@ class IoTDeviceClient:
     def _load_keys(self):
         """CP-ABE 키 로드"""
         try:
+            key_dir = os.path.join(os.path.dirname(__file__), "keys")
+            logger.info(f"폴더 이름: {KEY_DIR}")
+
+            # 키 로드
+            if os.path.exists(os.path.join(KEY_DIR , "public_key.bin")):
+                # 제조사로부터 받은 공개키 로드
+                public_key_file = os.path.join(KEY_DIR, "public_key.bin")
+                self.public_key = self.cpabe.load_public_key(public_key_file)
+                logger.info("공개키 로드 완료")
+            else:
+                logger.warning("공개키를 찾을 수 없습니다. 제조사로부터 받아야 합니다.")
+
             # 개인키 로드
-            device_secret_key_file = os.path.join(DEVICE_SECRET_KEY_FOLDER, "device_secret_key_file.bin")
+            device_secret_key_file = os.path.join(KEY_DIR, "device_secret_key_file.bin")
             self.device_secret_key = self.cpabe.load_device_secret_key(device_secret_key_file)
             logger.info(f"SKd: {self.device_secret_key}")
 
@@ -353,7 +365,10 @@ class IoTDeviceClient:
 
     def download_update(self, update_info):
         """업데이트 다운로드 및 설치 - 논문 로직에 맞춰 개선"""
-        try:
+        try:   
+            # 키 로드
+            self._load_keys()
+            
             logger.info(f"업데이트 다운로드 시작 - UID: {update_info['uid']}")
 
             uid = update_info["uid"]
