@@ -14,8 +14,6 @@ from crypto.symmetric.symmetric import SymmetricCrypto
 from crypto.hash.hash import HashTools
 from ipfs.download.download import IPFSDownloader
 from crypto.cpabe.cpabe import CPABETools
-from crypto.cpabe.dynamic_cpabe import DynamicCPABE
-from crypto.cpabe.fading_functions import LinearFadingFunction
 
 import requests
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
@@ -78,9 +76,9 @@ class IoTDeviceClient:
             logger.warning(f"[init] Web3_http 연결 확인 오류: {e}")
             # 연결이 안 되어도 계속 진행 (오프라인 테스트용)
 
-        # 동적 CP-ABE 초기화
-        self.cpabe = DynamicCPABE()
-        self.group = self.cpabe.group
+        # CP-ABE 초기화
+        self.cpabe = CPABETools()
+        self.group = self.cpabe.get_group()
 
         # 레지스트리 및 컨트랙트 객체
         self.contract_http = None
@@ -116,11 +114,9 @@ class IoTDeviceClient:
     def _load_keys(self):
         """CP-ABE 키 로드"""
         try:
-            key_dir = os.path.join(os.path.dirname(__file__), "keys")
-
             # 개인키 로드
             device_secret_key_file = os.path.join(DEVICE_SECRET_KEY_FOLDER, "device_secret_key_file.bin")
-            self.device_secret_key = self.cpabe.load_key_from_bin_file(self.group, device_secret_key_file)
+            self.device_secret_key = self.cpabe.load_device_secret_key(device_secret_key_file)
             logger.info(f"SKd: {self.device_secret_key}")
 
         except Exception as e:
@@ -409,32 +405,12 @@ class IoTDeviceClient:
 
             logger.info("해시 검증 성공")
             
-            # SKd 요청 및 저장
-            try:
-                key_download_url = f"{MANUFACTURER_API_URL}/api/manufacturer/device-key"
-                response = requests.post(key_download_url, json={"uid": uid})
-                logger.info(f"key_download_url: {key_download_url}")
-
-                if response.status_code == 200:
-                    key_path = os.path.join(os.path.dirname(__file__), "keys", "device_secret_key_file.bin")
-                    with open(key_path, "wb") as f:
-                        f.write(response.content)
-                    logger.info(f"디바이스 키 파일 저장 완료: {key_path}")
-                else:
-                    logger.warning(f"디바이스 키 요청 실패: {response.status_code} - {response.text}")
-            except Exception as key_err:
-                logger.error(f"디바이스 키 요청 중 오류: {key_err}")
-
             # 3. CP-ABE로 암호화된 대칭키(Ec) 복호화하여 대칭키(kbj) 획득
             try:
-                # SKd 로드
-                self._load_keys()
-                
-                logger.info(f"[WS] 암호화된 키: {encrypted_key[:60]}... 길이={len(encrypted_key)}")
                 logger.info(f"디바이스 속성 (SKd): {[s.strip() for s in self.device_secret_key['S']]}")
                 
                 # 복호화된 대칭키 확인
-                decrypted_kbj = self.decrypt_cpabe(encrypted_key, self.device_secret_key)
+                decrypted_kbj = self.decrypt_cpabe(encrypted_key, self.public_key, self.device_secret_key)
                 logger.info(f"복호화된 kbj: {decrypted_kbj}, 타입: {type(decrypted_kbj)}")
 
                 aes_key = sha256(objectToBytes(decrypted_kbj, self.group)).digest()[:32]
@@ -571,22 +547,15 @@ class IoTDeviceClient:
         return thread
 
     # CP-ABE로 kbj 복호화
-    def decrypt_cpabe(self, encrypted_key, device_secret_key):
+    def decrypt_cpabe(self, encrypted_key, public_key, device_secret_key):
         """CP-ABE 복호화"""
         try:
-            decrypted_key = self.cpabe.decrypt(encrypted_key, device_secret_key)
-
-            # 동적 속성 만료 or 키 유효하지 않음
-            if decrypted_key is False:
-                logger.warning("CP-ABE 복호화 실패: 만료된 속성")
-                raise ValueError("CP-ABE 복호화 실패: 만료된 속성")
-
+            decrypted_key = self.cpabe.decrypt(encrypted_key, public_key, device_secret_key)
             logger.info(f"CP-ABE 복호화 완료: {decrypted_key}")
             return decrypted_key
-
         except Exception as e:
-            logger.error(f"CP-ABE 복호화 예외 발생: {str(e)}")
-            raise ValueError(f"CP-ABE 복호화 실패: {str(e)}")
+            logger.error(f"CP-ABE 복호화 실패: {e}")
+            return None
 
 
 # 모듈 테스트용 코드
