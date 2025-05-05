@@ -1,0 +1,31 @@
+# Flask 웹 프레임워크
+Flask==2.0.1
+Werkzeug==2.0.1
+python-dotenv==0.19.1
+flask-cors==5.0.0 
+flask_socketio==5.0.1
+eventlet
+
+# 블록체인 관련
+web3==7.9.0
+py-solc-x==1.1.1  # solc-x를 py-solc-x로 변경
+websockets>=10.4
+
+# IPFS 관련
+ipfshttpclient==0.8.0a2
+
+# 암호화 관련
+cryptography==36.0.0
+pycryptodome==3.14.1
+pysha3==1.0.2
+
+# 테스트 관련
+pytest==7.0.0
+pytest-cov==3.0.0
+
+# 기타 유틸리티
+requests==2.27.1
+uuid==1.30
+
+# ECDSA 서명 관련
+ecdsa==0.19.0
