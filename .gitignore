@@ -84,7 +84,7 @@ wallet/
 node_modules/
 blockchain/private/
 *_address.json
-*.bin
+# *.bin
 
 # Docker 관련
 .docker/
