@@ -155,20 +155,28 @@ def purchase_update():
     try:
         data = request.json
         uid = data.get("uid")
-        price = int(data.get("price"))
+        price = data.get("price")
 
         if not uid:
             return jsonify({"error": "업데이트 ID가 필요합니다"}), 400
 
-        tx_hash = device.purchase_update(uid, price)
+        if not price:
+            return jsonify({"error": "가격이 필요합니다"}), 400
 
-        return jsonify(
-            {
-                "success": True,
-                "transaction": tx_hash.hex(),
-                "message": f"업데이트 {uid} 구매 완료",
-            }
-        )
+        result = device.purchase_update(uid, price)
+        
+        if not result.get("success"):
+            return jsonify({"error": "구매 실패", "details": result.get("message", "")}), 500
+
+        return jsonify({
+            "success": True,
+            "transaction": result["tx_hash"],
+            "message": f"업데이트 {uid} 구매 완료"
+        })
+
+    except ValueError as e:
+        logger.error(f"업데이트 구매 중 값 오류: {e}")
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
         return jsonify({"error": str(e)}), 500

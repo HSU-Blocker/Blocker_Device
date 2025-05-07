@@ -331,28 +331,53 @@ class IoTDeviceClient:
     def purchase_update(self, uid, price):
         """업데이트 구매"""
         try:
+            # 업데이트의 실제 가격 확인
+            update_info = self.contract_http.functions.getUpdateInfo(uid).call()
+            actual_price = update_info[4]  # price is the 5th element
+            
+            logger.info(f"업데이트의 실제 가격: {actual_price} wei")
+            logger.info(f"전달받은 가격: {price} wei")
+            
+            # 가격을 정확한 값으로 설정
+            price = actual_price
+
+            # 가스 가격 명시 (EIP-1559 피하기 위해 legacy 방식 사용)
+            gas_price = self.web3_http.to_wei("1", "gwei")
+
+            # 가스 추정 (여유 버퍼 포함)
+            gas_estimate = self.contract_http.functions.purchaseUpdate(uid).estimate_gas({
+                "from": self.owner_address,
+                "value": price,
+            })
+            gas_estimate += 10000  # 안전 여유치
+
+            # 잔액 확인
+            balance = self.web3_http.eth.get_balance(self.owner_address)
+            total_cost = price + (gas_estimate * gas_price)
+
+            if balance < total_cost:
+                error_msg = f"계정 잔액이 부족합니다. 필요: {total_cost} wei, 보유: {balance} wei"
+                logger.error(error_msg)
+                return {"success": False, "message": error_msg}
+
             logger.info(f"업데이트 구매 시작 - UID: {uid}, 가격: {price} wei")
 
             # 트랜잭션 구성
             txn = self.contract_http.functions.purchaseUpdate(uid).build_transaction(
                 {
                     "chainId": self.web3_http.eth.chain_id,
-                    "gas": 200000,
-                    "gasPrice": self.web3_http.eth.gas_price,
+                    "gas": gas_estimate,
+                    "gasPrice": gas_price,
                     "nonce": self.web3_http.eth.get_transaction_count(self.owner_address),
                     "value": price,
                 }
             )
 
-            # 트랜잭션 서명
+            # 서명 및 전송
             signed_txn = self.web3_http.eth.account.sign_transaction(
                 txn, private_key=self.owner_private_key
             )
-
-            # 트랜잭션 전송
             tx_hash = self.web3_http.eth.send_raw_transaction(signed_txn.raw_transaction)
-
-            # 트랜잭션 완료 대기
             tx_receipt = self.web3_http.eth.wait_for_transaction_receipt(tx_hash)
 
             logger.info(f"업데이트 구매 완료 - TX 해시: {tx_hash.hex()}")
@@ -362,6 +387,7 @@ class IoTDeviceClient:
         except Exception as e:
             logger.error(f"업데이트 구매 실패: {e}")
             raise Exception(f"업데이트 구매에 실패했습니다: {e}")
+
 
     def download_update(self, update_info):
         """업데이트 다운로드 및 설치 - 논문 로직에 맞춰 개선"""
