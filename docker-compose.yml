@@ -11,7 +11,7 @@ services:
       - WEB3_PROVIDER=http://52.78.52.216:8545
       - WEB3_WS_PROVIDER=ws://52.78.52.216:8545
       - IPFS_API=/dns4/ipfs/tcp/5001/http
-      - MANUFACTURER_API_URL=http://host.docker.internal:5001
+      - MANUFACTURER_API_URL=http://52.78.52.216:5002
       - DEVICE_API_PORT=5002
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
     extra_hosts:
