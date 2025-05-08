@@ -208,31 +208,30 @@ class IoTDeviceClient:
         """해당 블록에 UpdateRegistered 이벤트가 포함돼 있는지 확인하고 처리"""
         try:
             # 블록 정보 가져오기
-            block = await self.web3_socket.eth.get_block(block_hash) # 주어진 해시로 블록 조회
-            block_number = block["number"] # 블록 번호 추출
+            block = await self.web3_socket.eth.get_block(block_hash)
+            block_number = block["number"]
             logger.info(f"[check_for_updates_in_block] 블록 #{block_number} 확인 중...")
 
-            # 해당 블록의 로그 조회
+            # 현재 블록의 로그만 조회
             logs = await self.web3_socket.eth.get_logs({
                 "from_block": block_number,
                 "to_block": block_number,
-                "address": self.contract_socket.address # 특정 스마트 컨트랙트 주소에서 발생한 이벤트만 필터링
+                "address": self.contract_socket.address
             })
 
             if not logs:
-                logger.info(f"[check_for_updates_in_block] 이벤트 없음 (Block #{block_number})")
+                logger.debug(f"[check_for_updates_in_block] 이벤트 없음 (Block #{block_number})")
                 return
 
             # ABI 이벤트 디코딩
             for log in logs:
                 try:
                     decoded_event = self.contract_socket.events.UpdateRegistered().process_log(log)
-                    # 이벤트에서 uid, version, description 필드 추출
                     uid = decoded_event["args"]["uid"]
                     version = decoded_event["args"]["version"]
                     description = decoded_event["args"]["description"]
 
-                    logger.info(f"[check_for_updates_in_block] 이벤트 감지: UID={uid}, Version={version}")
+                    logger.info(f"[이벤트 감지] uid={uid}, version={version}")
 
                     if self.notification_callback:
                         self.notification_callback(
@@ -296,9 +295,9 @@ class IoTDeviceClient:
         return updates
 
     def check_and_approve_update(self, uid):
-        """디바이스가 업데이트 정보를 확인하고 수락하는 단계"""     
+        """디바이스가 업데이트 정보를 확인하는 단계"""     
         try:
-            logger.info(f"업데이트 확인 및 수락 프로세스 시작 - UID: {uid}")
+            logger.info(f"업데이트 정보 확인 시작 - UID: {uid}")
 
             # 업데이트 정보 가져오기
             update_info = self.contract_http.functions.getUpdateInfo(uid).call(
@@ -309,7 +308,7 @@ class IoTDeviceClient:
             if not update_info or not update_info[0]:  # ipfsHash 확인
                 return {"success": False, "message": "유효하지 않은 업데이트 정보"}
 
-            # 디바이스 속성과 업데이트 요구사항 비교 (모델, 버전 등)
+# 디바이스 속성과 업데이트 요구사항 비교 (모델, 버전 등)
             # 속성 기반 검증 로직 추가
 
             # 사용자/소유자 승인 이벤트 발생 (프론트엔드에서 처리)
@@ -325,7 +324,7 @@ class IoTDeviceClient:
                 },
             }
         except Exception as e:
-            logger.error(f"업데이트 확인 및 수락 실패: {e}")
+            logger.error(f"업데이트 확인 실패: {e}")
             return {"success": False, "message": str(e)}
 
     def purchase_update(self, uid, price):

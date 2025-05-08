@@ -15,9 +15,8 @@ class IPFSDownloader:
     """IPFS에서 파일 다운로드하는 클래스"""
     def __init__(self, api_url=None):
         """IPFS 다운로더 초기화"""
-        # IPFS API URL 설정
-        self.api_url = api_url or os.getenv("IPFS_API", "/dns4/ipfs/tcp/5001/http")
-        self.http_gateway = os.getenv("IPFS_GATEWAY", "/dns4/ipfs/tcp/8080/http")
+        self.api_url = api_url or os.getenv("IPFS_API")
+        self.http_gateway = os.getenv("IPFS_GATEWAY", "http://52.78.52.216:8080")
 
         # IPFS 연결 확인
         try:

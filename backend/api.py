@@ -201,15 +201,6 @@ def install_update():
         if not update_info:
             return jsonify({"error": f"업데이트 {uid}를 찾을 수 없습니다"}), 404
 
-        # 권한 확인
-        if not update_info.get("isAuthorized", False):
-            return (
-                jsonify(
-                    {"error": "이 업데이트에 대한 권한이 없습니다. 먼저 구매하세요."}
-                ),
-                403,
-            )
-
         # 업데이트 다운로드 및 설치 실행
         logger.info(f"업데이트 설치 시작: {uid}")
         result = device.download_update(update_info)
