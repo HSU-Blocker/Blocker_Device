@@ -135,27 +135,40 @@ class IoTDeviceClient:
             logger.error(f"키 로드 중 오류 발생: {e}")
 
     async def _load_contract(self):
-        """컨트랙트 직접 로드"""
+        """레지스트리를 통해 컨트랙트 로드"""
         try:
-            # 1. 업데이트 컨트랙트 설정 파일 로드
-            contract_file_path = os.path.join(
+            # 1. AddressRegistry 설정 파일 로드
+            registry_info_path = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
                 "blockchain",
-                "contract_address.json"
+                "registry_address.json"
             )
             
-            if not os.path.exists(contract_file_path):
-                raise FileNotFoundError(f"업데이트 컨트랙트 설정 파일을 찾을 수 없습니다: {contract_file_path}")
+            if not os.path.exists(registry_info_path):
+                raise FileNotFoundError(f"레지스트리 설정 파일을 찾을 수 없습니다: {registry_info_path}")
 
-            with open(contract_file_path, "r") as f:
-                contract_data = json.load(f)
+            with open(registry_info_path, "r") as f:
+                registry_info = json.load(f)
 
-            if not isinstance(contract_data, dict) or "abi" not in contract_data or "address" not in contract_data:
-                raise ValueError("업데이트 컨트랙트 파일 포맷이 잘못되었습니다")
+            if not isinstance(registry_info, dict) or "abi" not in registry_info or "address" not in registry_info:
+                raise ValueError("레지스트리 파일 포맷이 잘못되었습니다")
 
-            # 2. 업데이트 컨트랙트 주소와 ABI 가져오기
-            update_contract_address = self.web3_http.to_checksum_address(contract_data["address"])
-            contract_abi = contract_data["abi"]
+            # 2. AddressRegistry 컨트랙트 초기화
+            registry_address = self.web3_http.to_checksum_address(registry_info["address"])
+            registry_abi = registry_info["abi"]
+            registry_contract_http = self.web3_http.eth.contract(
+                address=registry_address,
+                abi=registry_abi
+            )
+            
+            # 3. 레지스트리에서 업데이트 컨트랙트 정보 가져오기
+            update_contract_address = registry_contract_http.functions.getContractAddress(
+                "SoftwareUpdateContract"
+            ).call()
+            update_abi_json = registry_contract_http.functions.getAbi(
+                "SoftwareUpdateContract"
+            ).call()
+            contract_abi = json.loads(update_abi_json)
 
             if not isinstance(contract_abi, list):
                 raise ValueError("ABI must be a list")
@@ -265,7 +278,6 @@ class IoTDeviceClient:
             for e in events:
                 print(f"[이벤트 감지] uid={e.args.uid}, version={e.args.version}")
 
-
             logger.info(f"[check_for_updates_http] 감지된 업데이트 수: {len(events)}")
 
             for event in events:
@@ -275,64 +287,74 @@ class IoTDeviceClient:
                 uid_str = uid.hex() if isinstance(uid, bytes) else str(uid)
 
                 # 업데이트 정보 동기 call()
-                update_info = self.contract_http.functions.getUpdateInfo(uid_str).call()
-                update = {
-                    "uid": uid,
-                    "ipfsHash": update_info[0],
-                    "encryptedKey": update_info[1],
-                    "hashOfUpdate": update_info[2],
-                    "description": update_info[3],
-                    "price": update_info[4],
-                    "version": update_info[5],
-                    "isAuthorized": update_info[6],
-                }
-                updates.append(update)
-                logger.info(f"[check_for_updates_http] 업데이트 정보: {update}")
+                logger.info(f"[check_for_updates_http] getUpdateInfo 호출 - UID: {uid_str}")
+                try:
+                    update_info = self.contract_http.functions.getUpdateInfo(uid_str).call()
+                    update = {
+                        "uid": uid,
+                        "ipfsHash": update_info[0],
+                        "encryptedKey": base64.b64encode(update_info[1]).decode() if update_info[1] else "",
+                        "hashOfUpdate": update_info[2],
+                        "description": update_info[3],
+                        "price": update_info[4],
+                        "version": update_info[5]
+                    }
+                    updates.append(update)
+                    logger.info(f"[check_for_updates_http] 변환된 업데이트 정보: {update}")
+                except Exception as e:
+                    logger.error(f"[check_for_updates_http] update_info 처리 중 오류: {e}")
+                    logger.error(f"- uid: {uid_str}")
+                    logger.error(f"- update_info: {update_info if 'update_info' in locals() else 'not defined'}")
+                    continue
 
         except Exception as e:
             logger.error(f"[check_for_updates_http] 업데이트 확인 실패: {e}")
 
         return updates
 
-    def check_and_approve_update(self, uid):
-        """디바이스가 업데이트 정보를 확인하는 단계"""     
-        try:
-            logger.info(f"업데이트 정보 확인 시작 - UID: {uid}")
+    # def check_and_approve_update(self, uid):
+    #     """디바이스가 업데이트 정보를 확인하는 단계"""     
+    #     try:
+    #         logger.info(f"업데이트 정보 확인 시작 - UID: {uid}")
 
-            # 업데이트 정보 가져오기
-            update_info = self.contract_http.functions.getUpdateInfo(uid).call(
-                {"from": self.owner_address}
-            )
+    #         # 업데이트 정보 가져오기
+    #         update_info = self.contract_http.functions.getUpdateInfo(uid).call(
+    #             {"from": self.owner_address}
+    #         )
 
-            # 업데이트 정보 검증
-            if not update_info or not update_info[0]:  # ipfsHash 확인
-                return {"success": False, "message": "유효하지 않은 업데이트 정보"}
+    #         # 업데이트 정보 검증
+    #         if not update_info or not update_info[0]:  # ipfsHash 확인
+    #             return {"success": False, "message": "유효하지 않은 업데이트 정보"}
 
-# 디바이스 속성과 업데이트 요구사항 비교 (모델, 버전 등)
-            # 속성 기반 검증 로직 추가
+    #         # 디바이스 속성과 업데이트 요구사항 비교 (모델, 버전 등)
+    #         # 속성 기반 검증 로직 추가
+    #         # TODO: 디바이스 속성과 업데이트 요구사항 비교
 
-            # 사용자/소유자 승인 이벤트 발생 (프론트엔드에서 처리)
-            return {
-                "success": True,
-                "update_info": {
-                    "uid": uid,
-                    "ipfsHash": update_info[0],
-                    "hashOfUpdate": update_info[2],
-                    "description": update_info[3],
-                    "price": update_info[4],
-                    "version": update_info[5],
-                },
-            }
-        except Exception as e:
-            logger.error(f"업데이트 확인 실패: {e}")
-            return {"success": False, "message": str(e)}
+    #         logger.info(f"업데이트 정보 encryptedKey: {update_info[1]}")  # 로그 추가
+
+    #         # 사용자/소유자 승인 이벤트 발생 (프론트엔드에서 처리)
+    #         return {
+    #             "success": True,
+    #             "update_info": {
+    #                 "uid": uid,
+    #                 "ipfsHash": update_info[0],
+    #                 "encryptedKey": base64.b64encode(update_info[1]).decode() if update_info[1] else "",  # bytes를 base64로 변환
+    #                 "hashOfUpdate": update_info[2],
+    #                 "description": update_info[3],
+    #                 "price": update_info[4],
+    #                 "version": update_info[5],
+    #             },
+    #         }
+    #     except Exception as e:
+    #         logger.error(f"업데이트 확인 실패: {e}")
+    #         return {"success": False, "message": str(e)}
 
     def purchase_update(self, uid, price):
         """업데이트 구매"""
         try:
             # 업데이트의 실제 가격 확인
             update_info = self.contract_http.functions.getUpdateInfo(uid).call()
-            actual_price = update_info[4]  # price is the 5th element
+            actual_price = update_info[4]
             
             logger.info(f"업데이트의 실제 가격: {actual_price} wei")
             logger.info(f"전달받은 가격: {price} wei")
@@ -399,6 +421,10 @@ class IoTDeviceClient:
             uid = update_info["uid"]
             ipfs_hash = update_info["ipfsHash"]
             encrypted_key = update_info["encryptedKey"]
+            # 1. base64 decode
+            encrypted_key_bytes = base64.b64decode(encrypted_key)
+            # 2. bytes → JSON 문자열
+            encrypted_key_json = encrypted_key_bytes.decode("utf-8")
             hash_of_update = update_info["hashOfUpdate"]
 
             # IPFS에서 업데이트 파일 다운로드
@@ -429,7 +455,7 @@ class IoTDeviceClient:
             with open(update_path, "rb") as file:
                 file_content = file.read(64)  # 처음 64바이트만 읽음
 
-            logger.info(f"운로드된 파일 내용 (처음 64바이트): {file_content.hex()}")  # HEX 출력
+            logger.info(f"다운로드된 파일 내용 (처음 64바이트): {file_content.hex()}")  # HEX 출력
             logger.info(f"원본 텍스트 (일부): {file_content[:64].decode(errors='ignore')}")  # 텍스트로 변환
 
             logger.info(f"업데이트 파일 다운로드 완료 - 경로: {update_path}")
@@ -450,7 +476,7 @@ class IoTDeviceClient:
                 logger.info(f"디바이스 속성 (SKd): {[s.strip() for s in self.device_secret_key['S']]}")
                 
                 # 복호화된 대칭키 확인
-                decrypted_kbj = self.decrypt_cpabe(encrypted_key, self.public_key, self.device_secret_key)
+                decrypted_kbj = self.decrypt_cpabe(encrypted_key_json, self.public_key, self.device_secret_key)
                 logger.info(f"복호화된 kbj: {decrypted_kbj}, 타입: {type(decrypted_kbj)}")
 
                 aes_key = sha256(objectToBytes(decrypted_kbj, self.group)).digest()[:32]
@@ -547,44 +573,7 @@ class IoTDeviceClient:
         except Exception as e:
             logger.error(f"설치 확인 메시지 전송 실패: {e}")
             return {"success": False, "message": str(e)}
-
-    def start_polling_listener(self, callback=None):
-        """(웹소켓 끊겼을 때만 사용)http 업데이트 이벤트 리스너 5초마다 확인"""
-
-        def polling_listener():
-            logger.info("업데이트 이벤트 리스너 시작")
-
-            # 이벤트 필터 생성
-            update_registered_filter = (
-                self.contract_http.events.UpdateRegistered.create_filter(from_block="latest")
-            )
-
-            while True:
-                try:
-                    # 새 이벤트 확인
-                    for event in update_registered_filter.get_new_entries():
-                        uid = event.args.uid
-                        version = event.args.version
-                        description = event.args.description
-
-                        logger.info(
-                            f"새로운 업데이트 감지 - UID: {uid}, 버전: {version}"
-                        )
-
-                        if callback:
-                            callback(uid, version, description)
-
-                    # 잠시 대기
-                    time.sleep(5)
-
-                except Exception as e:
-                    logger.error(f"이벤트 리스닝 중 오류: {e}")
-                    time.sleep(30)  # 오류 발생시 더 긴 대기 시간
-
-        # 별도 스레드에서 리스너 시작
-        thread = threading.Thread(target=polling_listener, daemon=True)
-        thread.start()
-        return thread
+        
 
     # CP-ABE로 kbj 복호화
     def decrypt_cpabe(self, encrypted_key, public_key, device_secret_key):
@@ -595,14 +584,128 @@ class IoTDeviceClient:
             return decrypted_key
         except Exception as e:
             logger.error(f"CP-ABE 복호화 실패: {e}")
+            logger.error(f"CP-ABE 복호화 실패 시 상태:")
+            logger.error(f"- encrypted_key: {encrypted_key}")
+            logger.error(f"- public_key: {public_key}")
+            logger.error(f"- device_secret_key: {device_secret_key}")
             return None
 
+    def get_purchased_updates(self):
+        """구매한 업데이트 목록 조회"""
+        try:
+            logger.info("[get_purchased_updates] 구매한 업데이트 목록 조회 시작")
+            
+            # 컨트랙트에서 구매한 업데이트 UID 목록 가져오기
+            update_uids = self.contract_http.functions.getOwnerUpdates().call({
+                "from": self.owner_address
+            })
+            
+            logger.info(f"[get_purchased_updates] 구매한 업데이트 UID 목록: {update_uids}")
+            logger.info(f"[get_purchased_updates] 구매한 업데이트 수: {len(update_uids)}")
+
+            purchased_updates = []
+            for uid in update_uids:
+                try:
+                    # 각 업데이트의 상세 정보 조회
+                    update_info = self.contract_http.functions.getUpdateInfo(uid).call()
+                    logger.info(f"[get_purchased_updates] 업데이트 정보 조회 - UID: {uid}")
+                    logger.info(f"[get_purchased_updates] - IPFS Hash: {update_info[0]}")
+                    logger.info(f"[get_purchased_updates] - 버전: {update_info[5]}")
+                    logger.info(f"[get_purchased_updates] - 설명: {update_info[3]}")
+                    logger.info(f"[get_purchased_updates] - 가격: {update_info[4]} wei")
+                    
+                    update = {
+                        "uid": uid,
+                        "description": update_info[3],
+                        "price": update_info[4],
+                        "version": update_info[5],
+                        "purchasedAt": self.web3_http.eth.get_block(
+                            self.web3_http.eth.get_transaction_receipt(
+                                self.web3_http.eth.get_transaction_by_block(
+                                    self.web3_http.eth.get_block_number(), 0
+                                )["hash"]
+                            ).blockNumber
+                        ).timestamp
+                    }
+                    purchased_updates.append(update)
+                    logger.info(f"[get_purchased_updates] 업데이트 정보 조회 성공 - UID: {uid}")
+                    
+                except Exception as e:
+                    logger.error(f"[get_purchased_updates] 업데이트 정보 조회 실패 - UID: {uid}, 오류: {e}")
+                    continue
+
+            # 구매 시간 기준으로 정렬 (최신순)
+            purchased_updates.sort(key=lambda x: x.get("purchasedAt", 0), reverse=True)
+            logger.info(f"[get_purchased_updates] 전체 구매 목록: {json.dumps(purchased_updates, indent=2)}")
+            
+            return purchased_updates
+
+        except Exception as e:
+            logger.error(f"[get_purchased_updates] 구매 목록 조회 실패: {e}")
+            return []
+
+    def get_update_history(self):
+        """설치된 업데이트 이력 조회"""
+        try:
+            logger.info("[get_update_history] 업데이트 설치 이력 조회 시작")
+            
+            # UpdateInstalled 이벤트 필터 생성 (현재 디바이스에 대한 설치 이력만 조회)
+            event_filter = self.contract_http.events.UpdateInstalled.create_filter(
+                from_block=0,
+                to_block='latest'
+            )
+            
+            # 이벤트 로그 조회
+            events = event_filter.get_all_entries()
+            logger.info(f"[get_update_history] 감지된 설치 이력 수: {len(events)}")
+
+            history = []
+            for event in events:
+                try:
+                    # 이벤트에서 정보 추출
+                    uid = event.args.uid
+                    device_id = event.args.deviceId
+                    
+                    # 현재 디바이스의 설치 이력만 필터링
+                    if device_id != self.device_id:
+                        continue
+                    
+                    # 블록 타임스탬프 가져오기
+                    block = self.web3_http.eth.get_block(event.blockNumber)
+                    timestamp = block.timestamp
+                    
+                    # 업데이트 상세 정보 조회
+                    update_info = self.contract_http.functions.getUpdateInfo(uid).call()
+                    
+                    history_item = {
+                        "uid": uid,
+                        "device_id": device_id,
+                        "version": update_info[5],  # version
+                        "description": update_info[3],  # description
+                        "timestamp": timestamp,
+                        "tx_hash": event.transactionHash.hex(),
+                        "block_number": event.blockNumber
+                    }
+                    history.append(history_item)
+                    logger.info(f"[get_update_history] 이력 항목 추가: {history_item}")
+                    
+                except Exception as e:
+                    logger.error(f"[get_update_history] 이력 항목 처리 중 오류 - Event: {event}, 오류: {e}")
+                    continue
+
+            # 시간순 정렬 (최신순)
+            history.sort(key=lambda x: x["timestamp"], reverse=True)
+            return history
+
+        except Exception as e:
+            logger.error(f"[get_update_history] 설치 이력 조회 실패: {e}")
+            return []
 
 # 모듈 테스트용 코드
 if __name__ == "__main__":
     # 디바이스 클라이언트 생성
     device = IoTDeviceClient(
-        device_id="test_device_001", model="ABC123", serial="SN12345", version="1.0.0"
+        device_id="test_device_001", model="K4", serial="ATTR1123456", version="1.0.0"
     )
 
     # 사용 가능한 업데이트 확인
