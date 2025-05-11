@@ -40,8 +40,8 @@ socketio.init_app(app)
 
 # 기기 설정
 DEVICE_ID = os.getenv("DEVICE_ID", "test_device_001")
-MODEL = os.getenv("DEVICE_MODEL", "ABC123")
-SERIAL = os.getenv("DEVICE_SERIAL", "SN12345")
+MODEL = os.getenv("DEVICE_MODEL", "K4")
+SERIAL = os.getenv("DEVICE_SERIAL", "ATTR1123456")
 VERSION = os.getenv("DEVICE_VERSION", "1.0.0")
 PORT = int(os.getenv("DEVICE_API_PORT", 5002))
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
@@ -51,9 +51,12 @@ MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
 def notify_new_update(uid, version, description):
     logger.info(f"[notify_new_update] 새로운 알림 emit 중 - UID: {uid}")
     socketio.emit("notification", {
-        "uid": uid,
-        "version": version,
-        "description": description
+        "type": "new_update",
+        "data": {
+            "uid": uid,
+            "version": version,
+            "description": description
+        }
     })
 
 # 기기 클라이언트 인스턴스 생성
@@ -87,17 +90,21 @@ def get_device_info():
     if not device:
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
 
-    # 구매 목록에서 마지막 구매한 업데이트 정보 확인
-    purchased_updates = device.get_purchased_updates()
-    last_update = purchased_updates[0] if purchased_updates else None
+    # 설치된 업데이트 이력에서 마지막 업데이트 정보 확인
+    installation_logs = device.get_update_history()
+    last_update = installation_logs[0] if installation_logs else None
 
+    # 기기의 현재 버전은 마지막 업데이트의 버전을 사용
+    current_version = last_update["version"] if last_update else device.attributes["version"]
+    last_update_timestamp = last_update["timestamp"] if last_update else None
+    
     return jsonify(
         {
             "id": device.device_id,
             "model": device.attributes["model"],
             "serial": device.attributes["serial"],
-            "version": device.attributes["version"],
-            "lastUpdate": last_update,
+            "version": current_version,
+            "lastUpdate": last_update_timestamp,
         }
     )
 
@@ -125,6 +132,8 @@ def check_updates():
         installed_uids = {log["uid"] for log in installation_logs}
         # 설치되지 않은 업데이트만 반환
         not_installed_updates = [u for u in updates if u["uid"] not in installed_uids]
+        # 버전을 기준으로 역순 정렬 (최신 버전이 위로)
+        not_installed_updates.sort(key=lambda x: x["version"], reverse=True)
         return jsonify({"updates": not_installed_updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
@@ -174,7 +183,22 @@ def purchase_update():
         result = device.purchase_update(uid, price)
         
         if not result.get("success"):
-            return jsonify({"error": "구매 실패", "details": result.get("message", "")}), 500
+            error_msg = result.get("message", "")
+            if "잔액이 부족합니다" in error_msg:
+                return jsonify({
+                    "error": "계정 잔액이 부족합니다. 필요한 금액을 확인해주세요.",
+                    "details": error_msg
+                }), 400
+            elif "Already purchased" in error_msg:
+                return jsonify({
+                    "error": "구매할 수 없거나 이미 구매한 업데이트입니다.",
+                    "details": error_msg
+                }), 400
+            else:
+                return jsonify({
+                    "error": "업데이트 구매에 실패했습니다.",
+                    "details": error_msg
+                }), 500
 
         return jsonify({
             "success": True,
@@ -184,10 +208,12 @@ def purchase_update():
 
     except ValueError as e:
         logger.error(f"업데이트 구매 중 값 오류: {e}")
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "잘못된 입력값입니다.", "details": str(e)}), 400
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}), 500
 
 @app.route("/api/device/updates/install", methods=["POST"])
 def install_update():
@@ -213,59 +239,111 @@ def install_update():
         logger.info(f"업데이트 설치 시작: {uid}")
         result = device.download_update(update_info)
 
+        # 실패 시 구체적인 오류 메시지 반환
+        if not result["success"]:
+            error_message = result.get("message", "알 수 없는 오류")
+            logger.error(f"설치 실패: {error_message}")
+
+            # 오류 메시지 분석하여 적절한 메시지 생성
+            if "대칭키 복호화 실패" in error_message:
+                message = "대칭키 복호화 실패, 환불되었습니다."
+            elif "해시 검증 실패" in error_message:
+                message = "업데이트 파일 무결성 검증 실패, 환불되었습니다."
+            elif "다운로드" in error_message:
+                message = "업데이트 파일 다운로드 실패, 환불되었습니다."
+            else:
+                message = "업데이트 설치 실패, 환불되었습니다."
+
+            return jsonify({
+                "success": False,
+                "error": message,  # 사용자에게 보여질 메시지
+                "details": error_message,  # 디버깅용 상세 에러
+                "message": message  # 이전 버전 호환성 유지
+            }), 500
+
         return jsonify(result)
 
     except Exception as e:
         logger.error(f"업데이트 설치 중 오류: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "message": "업데이트 설치 중 오류가 발생했습니다.",
+            "error": str(e)
+        }), 500
 
 @app.route("/api/device/history", methods=["GET"])
 def get_update_history():
-    """업데이트 구매/설치 이력 조회"""
+    """설치된 업데이트와 환불된 업데이트 이력 조회"""
     if not device:
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
-    
     try:
-        # 구매한 업데이트 목록 조회
-        purchased_updates = device.get_purchased_updates()
-        logger.info(f"[get_update_history] 구매한 업데이트 목록: {json.dumps(purchased_updates, indent=2)}")
-        
-        # 설치된 업데이트 목록 조회
+        # 설치된 업데이트 목록
         installation_logs = device.get_update_history()
-        logger.info(f"[get_update_history] 설치된 업데이트 목록: {json.dumps(installation_logs, indent=2)}")
-        installed_uids = {log["uid"] for log in installation_logs}
-        
-        # 구매 목록에 설치 상태 추가
+        logger.info(f"[get_update_history] 설치된 업데이트 UID 목록: {[log['uid'] for log in installation_logs]}")
+        # 환불된 업데이트 목록
+        refunded_updates = device.get_refunded_updates()
+        logger.info(f"[get_update_history] 환불된 업데이트 UID 목록: {[u['uid'] for u in refunded_updates]}")
+
         update_history = []
         seen_uids = set()
-        # 최신순 정렬된 purchased_updates를 역순으로 순회하며 중복 제거
-        for update in purchased_updates:
-            if update["uid"] in seen_uids:
+
+        # 설치된 업데이트 처리 (가격, 설명, 버전 포함)
+        for log in installation_logs:
+            uid = log["uid"]
+            if uid in seen_uids:
                 continue
-            update_info = update.copy()  # 원본 데이터 복사
-            update_info["isPurchased"] = True  # 구매 목록에 있으므로 항상 True
-            update_info["isInstalled"] = update["uid"] in installed_uids
-            
-            # wei를 ETH로 변환하여 추가
-            price_wei = int(update.get("price", 0))
-            price_eth = device.web3_http.from_wei(price_wei, "ether")
-            update_info["price_wei"] = price_wei
-            update_info["price_eth"] = float(price_eth)
-            
-            # 설치 정보가 있는 경우 설치 시간 추가
-            if update_info["isInstalled"]:
-                install_log = next(log for log in installation_logs if log["uid"] == update["uid"])
-                update_info["installedAt"] = install_log.get("timestamp")
-            
-            update_history.append(update_info)
-            seen_uids.add(update["uid"])
-            
-        # 시간순 정렬 (최신순)
-        update_history.sort(key=lambda x: x.get("installedAt", 0) or x.get("timestamp", 0), reverse=True)
+            # 블록체인에서 가격, 설명, 버전 정보 가져오기
+            try:
+                update_info = device.contract_http.functions.getUpdateInfo(uid).call()
+                price_wei = int(update_info[4])
+                price_eth = float(device.web3_http.from_wei(price_wei, "ether"))
+                description = update_info[3]
+                version = update_info[5]
+            except Exception as e:
+                logger.error(f"업데이트 정보 조회 실패(uid={uid}): {e}")
+                price_eth = None
+                description = None
+                version = None
+            item = {
+                "uid": uid,
+                "version": version,
+                "description": description,
+                "price_eth": price_eth,
+                "isInstalled": True,
+                "isRefunded": False,
+                "installedAt": log.get("timestamp"),  # 블록체인에서 가져온 시각
+                "refundedAt": None,
+            }
+            update_history.append(item)
+            seen_uids.add(uid)
+
+        # 환불만 된 항목(설치 안된 것) 추가 (가격, 설명, 버전 포함)
+        for refund in refunded_updates:
+            uid = refund["uid"]
+            item = {
+                "uid": uid,
+                "isInstalled": False,
+                "isRefunded": True,
+                "installedAt": None,
+                "refundedAt": refund.get("purchasedAt"),  # purchasedAt을 refundedAt으로 사용
+                "price_eth": float(device.web3_http.from_wei(int(refund.get("price", 0)), "ether")),
+                "description": refund.get("description"),
+                "version": refund.get("version")
+            }
+            update_history.append(item)
+
+        # 모든 이벤트를 발생 시각순으로 정렬
+        def get_event_time(item):
+            if item["isInstalled"]:
+                return item["installedAt"] or 0
+            else:
+                return item["refundedAt"] or 0  # refundedAt을 기준으로 정렬
         
-        logger.info(f"[get_update_history] 최종 반환할 업데이트 이력: {json.dumps(update_history, indent=2)}")
+        # 시각 기준 정렬 (최신순)
+        update_history.sort(key=get_event_time, reverse=True)
+        logger.info(f"[get_update_history] 정렬된 이력: {[(item['uid'], get_event_time(item)) for item in update_history]}")
         return jsonify({"history": update_history})
     except Exception as e:
         logger.error(f"업데이트 이력 조회 실패: {e}")
