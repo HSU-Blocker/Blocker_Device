@@ -1,5 +1,5 @@
 # 플랫폼 지정 및 Python 3.9-slim 이미지 사용
-FROM --platform=linux/amd64 python:3.9-slim
+FROM --platform=linux/arm64 python:3.9-slim
 
 # 기본 패키지 설치 (libgmp-dev 포함)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -58,8 +58,15 @@ RUN pip install --upgrade pip && \
 RUN pip install pycryptodome>=3.14.1 cryptography>=36.0.0
 
 # solc 설치 및 설정
-RUN pip install py-solc-x
-RUN python -c "import solcx; solcx.install_solc('0.8.17'); solcx.set_solc_version('0.8.17')"
+RUN git clone --recursive https://github.com/ethereum/solidity.git && \
+    cd solidity && git checkout v0.8.17 && \
+    mkdir build && cd build && \
+    cmake .. && make -j$(nproc) && \
+    cp solc /usr/local/bin && \
+    cd ../.. && rm -rf solidity
+
+# 환경변수로 solc 경로 설정
+ENV SOLCX_BINARY=/usr/local/bin/solc
 
 # 프로젝트 파일 복사
 COPY . .

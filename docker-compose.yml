@@ -3,7 +3,7 @@ version: '3.8'
 services:
   device:
     build: .
-    platform: linux/amd64  # Platform specification to match Dockerfile
+    platform: linux/arm64  # Platform specification to match Dockerfile
     ports:
       - "5002:5002"
     environment:
