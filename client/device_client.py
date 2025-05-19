@@ -482,26 +482,9 @@ class IoTDeviceClient:
                 decrypted_bj = SymmetricCrypto.decrypt_file(update_path, aes_key)
                 logger.info(f"decrypted_bj 업데이트 파일 복호화 성공: {decrypted_bj}")
                 
-                # 파일 내용 미리보기로 파이썬 파일인지 확인
-                with open(update_path, 'rb') as f:
-                    content_preview = f.read(64).decode(errors='ignore')
-                is_python = content_preview.startswith('#!') or 'import' in content_preview or 'def ' in content_preview
-                
-                logger.info(f"파일이 복호화되어 저장됨: {update_path}")
-                
-                # 파이썬 파일인 경우 실행
-                if is_python:
-                    logger.info("파이썬 파일로 감지되어 실행을 시도합니다")
-                    import subprocess
-                    try:
-                        result = subprocess.run(["python3", update_path], capture_output=True, text=True)
-                        logger.info(f"실행 결과: {result.stdout}")
-                        if result.stderr:
-                            logger.error(f"실행 에러: {result.stderr}")
-                    except Exception as run_err:
-                        logger.error(f"파이썬 파일 실행 실패: {run_err}")
-                else:
-                    logger.info("파이썬 파일이 아닌 것으로 감지되어 실행을 건너뜁니다")
+                # 호스트 시스템에서의 실제 경로를 로그로 출력
+                host_path = f"/soda/Blocker/sy/{os.path.basename(update_path)}"
+                logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
                 refund_result = self.refund_update(uid)
