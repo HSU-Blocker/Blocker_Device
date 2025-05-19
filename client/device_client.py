@@ -483,14 +483,11 @@ class IoTDeviceClient:
                 logger.info(f"decrypted_bj 업데이트 파일 복호화 성공: {decrypted_bj}")
                 
                 # 파일 내용 미리보기로 파이썬 파일인지 확인
-                with open(decrypted_bj, 'rb') as f:
+                with open(update_path, 'rb') as f:
                     content_preview = f.read(64).decode(errors='ignore')
                 is_python = content_preview.startswith('#!') or 'import' in content_preview or 'def ' in content_preview
                 
-                # 복호화된 파일을 update_path에 덮어쓰기
-                import shutil
-                shutil.copy2(decrypted_bj, update_path)
-                logger.info(f"복호화된 파일을 저장: {update_path}")
+                logger.info(f"파일이 복호화되어 저장됨: {update_path}")
                 
                 # 파이썬 파일인 경우 실행
                 if is_python:
