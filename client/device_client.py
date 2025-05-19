@@ -416,7 +416,7 @@ class IoTDeviceClient:
             # IPFS에서 업데이트 파일 다운로드
             # 1. IPFS에서 암호화된 업데이트 파일(Es) 다운로드
             ipfs_downloader = IPFSDownloader()
-            update_path = os.path.join(self.update_dir, f"{uid}.zip.enc")
+            update_path = os.path.join(self.update_dir, str(uid))
 
             try:
                 logger.info(f"IPFS에서 암호화된 파일 다운로드 시작: {ipfs_hash}")
@@ -481,23 +481,30 @@ class IoTDeviceClient:
                 logger.info("대칭키로 업데이트 파일 복호화 시작")
                 decrypted_bj = SymmetricCrypto.decrypt_file(update_path, aes_key)
                 logger.info(f"decrypted_bj 업데이트 파일 복호화 성공: {decrypted_bj}")
-                # 복호화된 파일을 file 폴더로 이동 및 .py로 저장
-                file_dir = os.path.join(os.path.dirname(__file__), "file")
-                if not os.path.exists(file_dir):
-                    os.makedirs(file_dir)
-                target_path = os.path.join(file_dir, f"{uid}.py")
+                
+                # 파일 내용 미리보기로 파이썬 파일인지 확인
+                with open(decrypted_bj, 'rb') as f:
+                    content_preview = f.read(64).decode(errors='ignore')
+                is_python = content_preview.startswith('#!') or 'import' in content_preview or 'def ' in content_preview
+                
+                # 복호화된 파일을 update_path에 덮어쓰기
                 import shutil
-                shutil.copy2(decrypted_bj, target_path)
-                logger.info(f"복호화된 파일을 file 폴더에 저장: {target_path}")
-                # 복호화된 파이썬 파일 실행
-                import subprocess
-                try:
-                    result = subprocess.run(["python3", target_path], capture_output=True, text=True)
-                    logger.info(f"실행 결과: {result.stdout}")
-                    if result.stderr:
-                        logger.error(f"실행 에러: {result.stderr}")
-                except Exception as run_err:
-                    logger.error(f"복호화된 파이썬 파일 실행 실패: {run_err}")
+                shutil.copy2(decrypted_bj, update_path)
+                logger.info(f"복호화된 파일을 저장: {update_path}")
+                
+                # 파이썬 파일인 경우 실행
+                if is_python:
+                    logger.info("파이썬 파일로 감지되어 실행을 시도합니다")
+                    import subprocess
+                    try:
+                        result = subprocess.run(["python3", update_path], capture_output=True, text=True)
+                        logger.info(f"실행 결과: {result.stdout}")
+                        if result.stderr:
+                            logger.error(f"실행 에러: {result.stderr}")
+                    except Exception as run_err:
+                        logger.error(f"파이썬 파일 실행 실패: {run_err}")
+                else:
+                    logger.info("파이썬 파일이 아닌 것으로 감지되어 실행을 건너뜁니다")
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
                 refund_result = self.refund_update(uid)
