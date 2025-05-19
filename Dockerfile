@@ -57,17 +57,6 @@ RUN pip install --upgrade pip && \
 # 필요한 추가 패키지 설치
 RUN pip install pycryptodome>=3.14.1 cryptography>=36.0.0
 
-# solc 설치 및 설정
-RUN git clone --recursive https://github.com/ethereum/solidity.git && \
-    cd solidity && git checkout v0.8.17 && \
-    mkdir build && cd build && \
-    cmake .. && make -j$(nproc) && \
-    cp solc /usr/local/bin && \
-    cd ../.. && rm -rf solidity
-
-# 환경변수로 solc 경로 설정
-ENV SOLCX_BINARY=/usr/local/bin/solc
-
 # 프로젝트 파일 복사
 COPY . .
 
