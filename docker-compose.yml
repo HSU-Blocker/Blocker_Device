@@ -19,4 +19,4 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./client/keys:/app/client/keys
-      - home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+      - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
