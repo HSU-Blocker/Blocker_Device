@@ -456,6 +456,8 @@ class IoTDeviceClient:
                 logger.error(
                     f"해시 검증 실패: 계산된 해시 {calculated_hash} != 기대 해시 {hash_of_update}"
                 )
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": "업데이트 파일 해시 검증 실패", "refund": refund_result}
 
@@ -473,6 +475,8 @@ class IoTDeviceClient:
                 logger.info(f"복호화된 aes_key: {aes_key}, 타입: {type(aes_key)}")
             except Exception as e:
                 logger.error(f"대칭키 복호화 실패: {e}")
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"대칭키 복호화 실패: {e}", "refund": refund_result}
 
@@ -487,6 +491,8 @@ class IoTDeviceClient:
                 logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"업데이트 파일 복호화 실패: {e}", "refund": refund_result}
 
