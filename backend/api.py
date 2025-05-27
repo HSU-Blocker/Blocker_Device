@@ -39,9 +39,9 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # 직
 socketio.init_app(app)
 
 # 기기 설정
-DEVICE_ID = os.getenv("DEVICE_ID", "test_device_001")
-MODEL = os.getenv("DEVICE_MODEL", "K4")
-SERIAL = os.getenv("DEVICE_SERIAL", "ATTR1123456")
+DEVICE_ID = os.getenv("DEVICE_ID", "blocker_device_001")
+MODEL = os.getenv("DEVICE_MODEL", "VS500")
+SERIAL = os.getenv("DEVICE_SERIAL", "KMHEM42APXA752012")
 VERSION = os.getenv("DEVICE_VERSION", "1.0.0")
 PORT = int(os.getenv("DEVICE_API_PORT", 5002))
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
@@ -97,7 +97,19 @@ def get_device_info():
     # 기기의 현재 버전은 마지막 업데이트의 버전을 사용
     current_version = last_update["version"] if last_update else device.attributes["version"]
     last_update_timestamp = last_update["timestamp"] if last_update else None
-    
+    last_update_uid = last_update["uid"] if last_update else None
+
+    # 마지막 업데이트 description만 반환
+    if last_update:
+        try:
+            update_info = device.contract_http.functions.getUpdateInfo(last_update["uid"]).call()
+            last_update_description = update_info[3]  # description 필드
+        except Exception as e:
+            logger.error(f"마지막 업데이트 description 조회 실패: {e}")
+            last_update_description = None
+    else:
+        last_update_description = None
+
     return jsonify(
         {
             "id": device.device_id,
@@ -105,6 +117,8 @@ def get_device_info():
             "serial": device.attributes["serial"],
             "version": current_version,
             "lastUpdate": last_update_timestamp,
+            "uid": last_update_uid,
+            "description": last_update_description,
         }
     )
 
