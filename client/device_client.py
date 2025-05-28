@@ -285,10 +285,10 @@ class IoTDeviceClient:
 
             for event in events:
                 uid = event["args"]["uid"]
-                logger.info(f"[check_for_updates_http] 업데이트 이벤트 - UID: {uid}")
+                # logger.info(f"[check_for_updates_http] 업데이트 이벤트 - UID: {uid}")
                 uid_str = uid.hex() if isinstance(uid, bytes) else str(uid)
                 # 업데이트 정보 동기 call()
-                logger.info(f"[check_for_updates_http] getUpdateInfo 호출 - UID: {uid_str}")
+                # logger.info(f"[check_for_updates_http] getUpdateInfo 호출 - UID: {uid_str}")
                 try:
                     update_info = self.contract_http.functions.getUpdateInfo(uid_str).call()
                     if not update_info[6]:  # isValid가 False면 건너뜀
@@ -303,12 +303,14 @@ class IoTDeviceClient:
                         "version": update_info[5]
                     }
                     updates.append(update)
-                    logger.info(f"[check_for_updates_http] 변환된 업데이트: uid={uid}, version={update_info[5]}")
+                    # logger.info(f"[check_for_updates_http] 변환된 업데이트: uid={uid}, version={update_info[5]}")
                 except Exception as e:
                     logger.error(f"[check_for_updates_http] update_info 처리 중 오류: {e}")
                     logger.error(f"- uid: {uid_str}")
                     logger.error(f"- update_info: {update_info if 'update_info' in locals() else 'not defined'}")
                     continue
+            # 최신 등록순(최근 것이 위로)으로 반환
+            updates.reverse()
         except Exception as e:
             logger.error(f"[check_for_updates_http] 업데이트 확인 실패: {e}")
         return updates

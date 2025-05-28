@@ -146,8 +146,7 @@ def check_updates():
         installed_uids = {log["uid"] for log in installation_logs}
         # 설치되지 않은 업데이트만 반환
         not_installed_updates = [u for u in updates if u["uid"] not in installed_uids]
-        # 버전을 기준으로 역순 정렬 (최신 버전이 위로)
-        not_installed_updates.sort(key=lambda x: x["version"], reverse=True)
+        # 최신 등록순 정렬은 device_client.py에서 처리됨
         return jsonify({"updates": not_installed_updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
