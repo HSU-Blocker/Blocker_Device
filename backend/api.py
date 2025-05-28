@@ -301,8 +301,7 @@ if __name__ == "__main__":
 
     # Web3 이벤트 리스너 비동기 루틴 실행
     async def websocket_listener():
-        await device._init_async_web3_socket_()
-        await device.listen_for_updates()
+        await device.listen_for_updates_forever()
 
     # eventlet용 green thread에서 실행
     threading.Thread(target=run_socketio).start()
