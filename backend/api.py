@@ -141,13 +141,7 @@ def check_updates():
         return jsonify({"updates": [], "error": "기기 없음"}), 500
     try:
         updates = device.check_for_updates_http()
-        # 설치된 업데이트 uid 목록 구하기
-        installation_logs = device.get_update_history()
-        installed_uids = {log["uid"] for log in installation_logs}
-        # 설치되지 않은 업데이트만 반환
-        not_installed_updates = [u for u in updates if u["uid"] not in installed_uids]
-        # 최신 등록순 정렬은 device_client.py에서 처리됨
-        return jsonify({"updates": not_installed_updates})
+        return jsonify({"updates": updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
         return jsonify({"updates": [], "error": str(e)}), 500
