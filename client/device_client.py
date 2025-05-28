@@ -745,3 +745,49 @@ class IoTDeviceClient:
         except Exception as e:
             logger.error(f"[get_update_history] 설치 이력 조회 실패: {e}")
             return []
+
+    def get_owner_update_history(self):
+        """
+        Solidity의 getOwnerUpdateHistory()를 호출해
+        구매/설치/환불 상태 및 업데이트 상세정보를 한 번에 반환
+        """
+        try:
+            result = self.contract_http.functions.getOwnerUpdateHistory().call({'from': self.owner_address})
+            (
+                uids,
+                ipfs_hashes,
+                encrypted_keys,
+                hash_of_updates,
+                descriptions,
+                prices,
+                versions,
+                is_valids,
+                is_purchased,
+                is_installed,
+                is_refunded
+            ) = result
+            update_history = []
+            for i in range(len(uids)):
+                try:
+                    price_wei = int(prices[i])
+                    price_eth = float(self.web3_http.from_wei(price_wei, "ether"))
+                except Exception:
+                    price_eth = None
+                item = {
+                    "uid": uids[i],
+                    "version": versions[i],
+                    "description": descriptions[i],
+                    "price_eth": price_eth,
+                    "isInstalled": is_installed[i],
+                    "isRefunded": is_refunded[i],
+                    # installedAt/refundedAt은 블록체인에 별도 기록 없으므로 None
+                    "installedAt": None,
+                    "refundedAt": None
+                }
+                update_history.append(item)
+            # 최신순 정렬 (uid 기준, 필요시 추가 정렬 가능)
+            update_history.reverse()
+            return update_history
+        except Exception as e:
+            logger.error(f"[get_owner_update_history] 오류: {e}")
+            return []

@@ -282,75 +282,11 @@ def install_update():
 
 @app.route("/api/device/history", methods=["GET"])
 def get_update_history():
-    """설치된 업데이트와 환불된 업데이트 이력 조회"""
+    """설치된 업데이트와 환불된 업데이트 이력 조회 (device_client 위임)"""
     if not device:
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
     try:
-        # 설치된 업데이트 목록
-        installation_logs = device.get_update_history()
-        logger.info(f"[get_update_history] 설치된 업데이트 UID 목록: {[log['uid'] for log in installation_logs]}")
-        # 환불된 업데이트 목록
-        refunded_updates = device.get_refunded_updates()
-        logger.info(f"[get_update_history] 환불된 업데이트 UID 목록: {[u['uid'] for u in refunded_updates]}")
-
-        update_history = []
-        seen_uids = set()
-
-        # 설치된 업데이트 처리 (가격, 설명, 버전 포함)
-        for log in installation_logs:
-            uid = log["uid"]
-            if uid in seen_uids:
-                continue
-            # 블록체인에서 가격, 설명, 버전 정보 가져오기
-            try:
-                update_info = device.contract_http.functions.getUpdateInfo(uid).call()
-                price_wei = int(update_info[4])
-                price_eth = float(device.web3_http.from_wei(price_wei, "ether"))
-                description = update_info[3]
-                version = update_info[5]
-            except Exception as e:
-                logger.error(f"업데이트 정보 조회 실패(uid={uid}): {e}")
-                price_eth = None
-                description = None
-                version = None
-            item = {
-                "uid": uid,
-                "version": version,
-                "description": description,
-                "price_eth": price_eth,
-                "isInstalled": True,
-                "isRefunded": False,
-                "installedAt": log.get("timestamp"),  # 블록체인에서 가져온 시각
-                "refundedAt": None,
-            }
-            update_history.append(item)
-            seen_uids.add(uid)
-
-        # 환불만 된 항목(설치 안된 것) 추가 (가격, 설명, 버전 포함)
-        for refund in refunded_updates:
-            uid = refund["uid"]
-            item = {
-                "uid": uid,
-                "isInstalled": False,
-                "isRefunded": True,
-                "installedAt": None,
-                "refundedAt": refund.get("purchasedAt"),  # purchasedAt을 refundedAt으로 사용
-                "price_eth": float(device.web3_http.from_wei(int(refund.get("price", 0)), "ether")),
-                "description": refund.get("description"),
-                "version": refund.get("version")
-            }
-            update_history.append(item)
-
-        # 모든 이벤트를 발생 시각순으로 정렬
-        def get_event_time(item):
-            if item["isInstalled"]:
-                return item["installedAt"] or 0
-            else:
-                return item["refundedAt"] or 0  # refundedAt을 기준으로 정렬
-        
-        # 시각 기준 정렬 (최신순)
-        update_history.sort(key=get_event_time, reverse=True)
-        logger.info(f"[get_update_history] 정렬된 이력: {[(item['uid'], get_event_time(item)) for item in update_history]}")
+        update_history = device.get_owner_update_history()
         return jsonify({"history": update_history})
     except Exception as e:
         logger.error(f"업데이트 이력 조회 실패: {e}")
