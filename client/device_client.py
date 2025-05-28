@@ -749,44 +749,37 @@ class IoTDeviceClient:
     def get_owner_update_history(self):
         """
         Solidity의 getOwnerUpdateHistory()를 호출해
-        구매/설치/환불 상태 및 업데이트 상세정보를 한 번에 반환
+        구매/설치/환불 상태 및 시각, 업데이트 상세정보를 한 번에 반환
         """
         try:
+            # getOwnerUpdateHistory()는 UpdateHistory[] 구조를 반환
+            # 각 UpdateHistory: (uid, ipfsHash, encryptedKey, hashOfUpdate, description, price, version, isValid, isPurchased, isInstalled, isRefunded, purchaseTime, installTime, refundTime)
             result = self.contract_http.functions.getOwnerUpdateHistory().call({'from': self.owner_address})
-            (
-                uids,
-                ipfs_hashes,
-                encrypted_keys,
-                hash_of_updates,
-                descriptions,
-                prices,
-                versions,
-                is_valids,
-                is_purchased,
-                is_installed,
-                is_refunded
-            ) = result
             update_history = []
-            for i in range(len(uids)):
+            for item in result:
                 try:
-                    price_wei = int(prices[i])
+                    price_wei = int(item[5])
                     price_eth = float(self.web3_http.from_wei(price_wei, "ether"))
                 except Exception:
                     price_eth = None
-                item = {
-                    "uid": uids[i],
-                    "version": versions[i],
-                    "description": descriptions[i],
+                update_history.append({
+                    "uid": item[0],
+                    "ipfsHash": item[1],
+                    "encryptedKey": base64.b64encode(item[2]).decode() if item[2] else "",
+                    "hashOfUpdate": item[3],
+                    "description": item[4],
                     "price_eth": price_eth,
-                    "isInstalled": is_installed[i],
-                    "isRefunded": is_refunded[i],
-                    # installedAt/refundedAt은 블록체인에 별도 기록 없으므로 None
-                    "installedAt": None,
-                    "refundedAt": None
-                }
-                update_history.append(item)
-            # 최신순 정렬 (uid 기준, 필요시 추가 정렬 가능)
-            update_history.reverse()
+                    "version": item[6],
+                    "isValid": item[7],
+                    "isPurchased": item[8],
+                    "isInstalled": item[9],
+                    "isRefunded": item[10],
+                    "purchasedAt": int(item[11]) if item[11] else None,
+                    "installedAt": int(item[12]) if item[12] else None,
+                    "refundedAt": int(item[13]) if item[13] else None
+                })
+            # 최신순 정렬 (구매시각 기준, 없으면 uid 기준)
+            update_history.sort(key=lambda x: x["purchasedAt"] or 0, reverse=True)
             return update_history
         except Exception as e:
             logger.error(f"[get_owner_update_history] 오류: {e}")
