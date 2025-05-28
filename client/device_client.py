@@ -16,7 +16,6 @@ from ipfs.download.download import IPFSDownloader
 from crypto.cpabe.cpabe import CPABETools
 
 import requests
-import asyncio
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
 
 # 프로젝트 루트 디렉토리 추가
@@ -217,24 +216,6 @@ class IoTDeviceClient:
 
             except Exception as e:
                 logger.error(f"[listen_for_updates] WebSocket 이벤트 리스너 오류: {e}")
-
-    async def listen_for_updates_forever(self, reconnect_delay=5):
-        """WebSocket 이벤트 리스너를 무한 재연결로 실행 (안정성 향상)"""
-        while True:
-            try:
-                await self._init_async_web3_socket_()
-                await self.listen_for_updates()
-            except Exception as e:
-                logger.error(f"[listen_for_updates_forever] WebSocket 오류: {e}. {reconnect_delay}초 후 재연결 시도")
-                await asyncio.sleep(reconnect_delay)
-            finally:
-                # 소켓 자원 정리 (disconnect 지원 시)
-                try:
-                    if self.web3_socket and hasattr(self.web3_socket, 'provider') and hasattr(self.web3_socket.provider, 'disconnect'):
-                        await self.web3_socket.provider.disconnect()
-                        logger.info("[listen_for_updates_forever] WebSocket provider disconnect 완료")
-                except Exception as e:
-                    logger.warning(f"[listen_for_updates_forever] disconnect 중 오류: {e}")
 
     async def check_for_updates_in_block(self, block_hash):
         """해당 블록에 UpdateRegistered 이벤트가 포함돼 있는지 확인하고 처리"""
