@@ -269,46 +269,40 @@ class IoTDeviceClient:
     def check_for_updates_http(self, from_block=0, to_block="latest"):
         """
         [API용] Flask 등에서 "/api/device/updates" 조회 시 사용
-        - self.contract_api (HTTP)로 동기 호출
-        - 이벤트 WebSocket과 충돌 없이 조회
+        - getPendingUpdatesForOwner()를 사용해 설치 전/환불 전 업데이트만 조회
         """
         logger.info("[check_for_updates_http] 사용 가능한 업데이트 확인 중...")
         updates = []
         try:
-            event_filter = self.contract_http.events.UpdateRegistered.create_filter(
-                from_block=0,
-                to_block='latest'
-            )
-            events = event_filter.get_all_entries()
+            # getPendingUpdatesForOwner를 한 번만 호출하여 모든 정보 배열을 가져옴
+            result = self.contract_http.functions.getPendingUpdatesForOwner().call({'from': self.owner_address})
+            # 반환값: (uids, ipfsHashes, encryptedKeys, hashOfUpdates, descriptions, prices, versions, isValids)
+            (
+                uids,
+                ipfs_hashes,
+                encrypted_keys,
+                hash_of_updates,
+                descriptions,
+                prices,
+                versions,
+                is_valids
+            ) = result
 
-            logger.info(f"[check_for_updates_http] 감지된 업데이트 UID: {[e.args.uid for e in events]}")
+            logger.info(f"[check_for_updates_http] 감지된 업데이트 UID: {uids}")
 
-            for event in events:
-                uid = event["args"]["uid"]
-                # logger.info(f"[check_for_updates_http] 업데이트 이벤트 - UID: {uid}")
-                uid_str = uid.hex() if isinstance(uid, bytes) else str(uid)
-                # 업데이트 정보 동기 call()
-                # logger.info(f"[check_for_updates_http] getUpdateInfo 호출 - UID: {uid_str}")
-                try:
-                    update_info = self.contract_http.functions.getUpdateInfo(uid_str).call()
-                    if not update_info[6]:  # isValid가 False면 건너뜀
-                        continue
-                    update = {
-                        "uid": uid,
-                        "ipfsHash": update_info[0],
-                        "encryptedKey": base64.b64encode(update_info[1]).decode() if update_info[1] else "",
-                        "hashOfUpdate": update_info[2],
-                        "description": update_info[3],
-                        "price": update_info[4],
-                        "version": update_info[5]
-                    }
-                    updates.append(update)
-                    # logger.info(f"[check_for_updates_http] 변환된 업데이트: uid={uid}, version={update_info[5]}")
-                except Exception as e:
-                    logger.error(f"[check_for_updates_http] update_info 처리 중 오류: {e}")
-                    logger.error(f"- uid: {uid_str}")
-                    logger.error(f"- update_info: {update_info if 'update_info' in locals() else 'not defined'}")
+            for i in range(len(uids)):
+                if not is_valids[i]:
                     continue
+                update = {
+                    "uid": uids[i],
+                    "ipfsHash": ipfs_hashes[i],
+                    "encryptedKey": base64.b64encode(encrypted_keys[i]).decode() if encrypted_keys[i] else "",
+                    "hashOfUpdate": hash_of_updates[i],
+                    "description": descriptions[i],
+                    "price": prices[i],
+                    "version": versions[i]
+                }
+                updates.append(update)
             # 최신 등록순(최근 것이 위로)으로 반환
             updates.reverse()
         except Exception as e:
@@ -709,7 +703,7 @@ class IoTDeviceClient:
                     device_id = event.args.deviceId
                     
                     # 현재 디바이스의 설치 이력만 필터링
-                    logger.info(f"[get_update_history] 디바이스 ID 비교: event_device_id={device_id} (type={type(device_id)}), self.device_id={self.device_id} (type={type(self.device_id)})")
+                    # logger.info(f"[get_update_history] 디바이스 ID 비교: event_device_id={device_id} (type={type(device_id)}), self.device_id={self.device_id} (type={type(self.device_id)})")
                     
                     # device_id가 bytes 타입인 경우 문자열로 변환
                     if isinstance(device_id, bytes):
@@ -739,7 +733,7 @@ class IoTDeviceClient:
                         "block_number": block_number
                     }
                     history.append(history_item)
-                    logger.info(f"[get_update_history] 이력 추가: uid={uid}, block={event.blockNumber}")
+                    # logger.info(f"[get_update_history] 이력 추가: uid={uid}, block={event.blockNumber}")
                     
                 except Exception as e:
                     logger.error(f"[get_update_history] 이력 항목 처리 중 오류 - Event: {event}, 오류: {e}")
