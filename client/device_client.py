@@ -701,6 +701,7 @@ class IoTDeviceClient:
             logger.info(f"[get_update_history] 감지된 설치 이력 UID: {[event.args.uid for event in events]}")
 
             history = []
+            block_cache = {}  # 블록 넘버별 캐시
             for event in events:
                 try:
                     # 이벤트에서 정보 추출
@@ -718,8 +719,11 @@ class IoTDeviceClient:
                         logger.info(f"[get_update_history] 다른 디바이스의 이력이므로 건너뜀: {device_id}")
                         continue
                     
-                    # 블록 타임스탬프 가져오기
-                    block = self.web3_http.eth.get_block(event.blockNumber)
+                    # 블록 타임스탬프 가져오기 (캐싱 활용)
+                    block_number = event.blockNumber
+                    if block_number not in block_cache:
+                        block_cache[block_number] = self.web3_http.eth.get_block(block_number)
+                    block = block_cache[block_number]
                     timestamp = block.timestamp
                     
                     # 업데이트 상세 정보 조회
@@ -732,7 +736,7 @@ class IoTDeviceClient:
                         "description": update_info[3],
                         "timestamp": timestamp,  # 블록체인에서 가져온 시각
                         "tx_hash": event.transactionHash.hex(),
-                        "block_number": event.blockNumber
+                        "block_number": block_number
                     }
                     history.append(history_item)
                     logger.info(f"[get_update_history] 이력 추가: uid={uid}, block={event.blockNumber}")
