@@ -118,14 +118,7 @@ def get_device_info():
 
     # 마지막 업데이트 description만 반환
     if last_update:
-        try:
-            update_info = device.contract_http.functions.getUpdateInfo(
-                last_update["uid"]
-            ).call()
-            last_update_description = update_info[3]  # description 필드
-        except Exception as e:
-            logger.error(f"마지막 업데이트 description 조회 실패: {e}")
-            last_update_description = None
+        last_update_description = last_update["description"]
     else:
         last_update_description = None
 
