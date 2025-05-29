@@ -113,7 +113,7 @@ def get_device_info():
     current_version = (
         last_update["version"] if last_update else device.attributes["version"]
     )
-    last_update_timestamp = last_update["timestamp"] if last_update else None
+    last_update_timestamp = last_update["installedAt"] if last_update else None
     last_update_uid = last_update["uid"] if last_update else None
 
     # 마지막 업데이트 description만 반환
