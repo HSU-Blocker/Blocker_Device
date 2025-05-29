@@ -106,7 +106,7 @@ def get_device_info():
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
 
     # 설치된 업데이트 이력에서 마지막 업데이트 정보 확인
-    installation_logs = device.get_update_history()
+    installation_logs = device.get_owner_update_history()
     last_update = installation_logs[0] if installation_logs else None
 
     # 기기의 현재 버전은 마지막 업데이트의 버전을 사용
