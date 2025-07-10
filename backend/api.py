@@ -1,4 +1,5 @@
 import eventlet
+
 eventlet.monkey_patch()
 
 import os
@@ -39,31 +40,42 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # 직
 socketio.init_app(app)
 
 # 기기 설정
-DEVICE_ID = os.getenv("DEVICE_ID", "test_device_001")
-MODEL = os.getenv("DEVICE_MODEL", "K4")
-SERIAL = os.getenv("DEVICE_SERIAL", "ATTR1123456")
+DEVICE_ID = os.getenv("DEVICE_ID", "blocker_device_001")
+MODEL = os.getenv("DEVICE_MODEL", "VS500")
+SERIAL = os.getenv("DEVICE_SERIAL", "KMHEM42APXA752012")
 VERSION = os.getenv("DEVICE_VERSION", "1.0.0")
 PORT = int(os.getenv("DEVICE_API_PORT", 5002))
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
 
-# 알림 콜백 함수 (IoTDeviceClient에서 업데이트가 있을 때 호출)
-# socketio.emit을 사용하여 클라이언트에게 알림을 전송
+# 알림 저장소 (메모리)
+notifications = []
+notification_id_counter = 1
+
+
+# 알림 등록 함수 (emit + 저장)
 def notify_new_update(uid, version, description):
+    global notification_id_counter
     logger.info(f"[notify_new_update] 새로운 알림 emit 중 - UID: {uid}")
-    socketio.emit("notification", {
+    notification = {
+        "id": notification_id_counter,
+        "timestamp": int(time.time()),
         "type": "new_update",
-        "data": {
-            "uid": uid,
-            "version": version,
-            "description": description
-        }
-    })
+        "data": {"uid": uid, "version": version, "description": description},
+    }
+    notifications.append(notification)
+    notification_id_counter += 1
+    socketio.emit("notification", notification)
+
 
 # 기기 클라이언트 인스턴스 생성
 device = None
 try:
     device = IoTDeviceClient(
-        device_id=DEVICE_ID, model=MODEL, serial=SERIAL, version=VERSION, notification_callback=notify_new_update
+        device_id=DEVICE_ID,
+        model=MODEL,
+        serial=SERIAL,
+        version=VERSION,
+        notification_callback=notify_new_update,
     )
     logger.info(f"IoT 기기 클라이언트 초기화 완료: {DEVICE_ID}")
 except Exception as e:
@@ -73,16 +85,19 @@ except Exception as e:
 current_dir = os.path.dirname(os.path.abspath(__file__))
 static_folder = os.path.join(os.path.dirname(current_dir), "frontend")
 
+
 # 프론트엔드 라우팅
 @app.route("/")
 def index():
     """프론트엔드 인덱스 페이지 제공"""
     return send_from_directory(static_folder, "index.html")
 
+
 @app.route("/<path:path>")
 def static_files(path):
     """정적 파일 제공"""
     return send_from_directory(static_folder, path)
+
 
 @app.route("/api/device/info", methods=["GET"])
 def get_device_info():
@@ -91,13 +106,22 @@ def get_device_info():
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
 
     # 설치된 업데이트 이력에서 마지막 업데이트 정보 확인
-    installation_logs = device.get_update_history()
+    installation_logs = device.get_owner_update_history()
     last_update = installation_logs[0] if installation_logs else None
 
     # 기기의 현재 버전은 마지막 업데이트의 버전을 사용
-    current_version = last_update["version"] if last_update else device.attributes["version"]
-    last_update_timestamp = last_update["timestamp"] if last_update else None
-    
+    current_version = (
+        last_update["version"] if last_update else device.attributes["version"]
+    )
+    last_update_timestamp = last_update["installedAt"] if last_update else None
+    last_update_uid = last_update["uid"] if last_update else None
+
+    # 마지막 업데이트 description만 반환
+    if last_update:
+        last_update_description = last_update["description"]
+    else:
+        last_update_description = None
+
     return jsonify(
         {
             "id": device.device_id,
@@ -105,8 +129,11 @@ def get_device_info():
             "serial": device.attributes["serial"],
             "version": current_version,
             "lastUpdate": last_update_timestamp,
+            "uid": last_update_uid,
+            "description": last_update_description,
         }
     )
+
 
 @app.route("/api/device/connection", methods=["GET"])
 def check_connection():
@@ -121,23 +148,18 @@ def check_connection():
         logger.error(f"블록체인 연결 확인 중 오류: {e}")
         return jsonify({"connected": False, "error": str(e)}), 500
 
+
 @app.route("/api/device/updates", methods=["GET"])
 def check_updates():
     if not device:
         return jsonify({"updates": [], "error": "기기 없음"}), 500
     try:
         updates = device.check_for_updates_http()
-        # 설치된 업데이트 uid 목록 구하기
-        installation_logs = device.get_update_history()
-        installed_uids = {log["uid"] for log in installation_logs}
-        # 설치되지 않은 업데이트만 반환
-        not_installed_updates = [u for u in updates if u["uid"] not in installed_uids]
-        # 버전을 기준으로 역순 정렬 (최신 버전이 위로)
-        not_installed_updates.sort(key=lambda x: x["version"], reverse=True)
-        return jsonify({"updates": not_installed_updates})
+        return jsonify({"updates": updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
         return jsonify({"updates": [], "error": str(e)}), 500
+
 
 # 디바이스 클라이언트 인스턴스를 반환하는 함수 추가
 def get_device_client():
@@ -154,17 +176,19 @@ def get_device_client():
             return None
     return device
 
+
 # 업데이트가 이미 설치되었는지 확인하는 함수 추가
 def is_update_installed(uid):
     """업데이트를 구매했는지 확인"""
     if not device:
         return False
-    
+
     purchased = device.get_purchased_updates()
     return any(item.get("uid") == uid for item in purchased)
 
+
 @app.route("/api/device/updates/purchase", methods=["POST"])
-def purchase_update():    
+def purchase_update():
     """업데이트 구매"""
     if not device:
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
@@ -181,30 +205,44 @@ def purchase_update():
             return jsonify({"error": "가격이 필요합니다"}), 400
 
         result = device.purchase_update(uid, price)
-        
+
         if not result.get("success"):
             error_msg = result.get("message", "")
             if "잔액이 부족합니다" in error_msg:
-                return jsonify({
-                    "error": "계정 잔액이 부족합니다. 필요한 금액을 확인해주세요.",
-                    "details": error_msg
-                }), 400
+                return (
+                    jsonify(
+                        {
+                            "error": "계정 잔액이 부족합니다. 필요한 금액을 확인해주세요.",
+                            "details": error_msg,
+                        }
+                    ),
+                    400,
+                )
             elif "Already purchased" in error_msg:
-                return jsonify({
-                    "error": "구매할 수 없거나 이미 구매한 업데이트입니다.",
-                    "details": error_msg
-                }), 400
+                return (
+                    jsonify(
+                        {
+                            "error": "구매할 수 없거나 이미 구매한 업데이트입니다.",
+                            "details": error_msg,
+                        }
+                    ),
+                    400,
+                )
             else:
-                return jsonify({
-                    "error": "업데이트 구매에 실패했습니다.",
-                    "details": error_msg
-                }), 500
+                return (
+                    jsonify(
+                        {"error": "업데이트 구매에 실패했습니다.", "details": error_msg}
+                    ),
+                    500,
+                )
 
-        return jsonify({
-            "success": True,
-            "transaction": result["tx_hash"],
-            "message": f"업데이트 {uid} 구매 완료"
-        })
+        return jsonify(
+            {
+                "success": True,
+                "transaction": result["tx_hash"],
+                "message": f"업데이트 {uid} 구매 완료",
+            }
+        )
 
     except ValueError as e:
         logger.error(f"업데이트 구매 중 값 오류: {e}")
@@ -212,8 +250,15 @@ def purchase_update():
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
-        return jsonify({"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}), 500
+        return (
+            jsonify(
+                {"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}
+            ),
+            500,
+        )
+
 
 @app.route("/api/device/updates/install", methods=["POST"])
 def install_update():
@@ -254,100 +299,58 @@ def install_update():
             else:
                 message = "업데이트 설치 실패, 환불되었습니다."
 
-            return jsonify({
-                "success": False,
-                "error": message,  # 사용자에게 보여질 메시지
-                "details": error_message,  # 디버깅용 상세 에러
-                "message": message  # 이전 버전 호환성 유지
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": message,  # 사용자에게 보여질 메시지
+                        "details": error_message,  # 디버깅용 상세 에러
+                        "message": message,  # 이전 버전 호환성 유지
+                    }
+                ),
+                500,
+            )
 
         return jsonify(result)
 
     except Exception as e:
         logger.error(f"업데이트 설치 중 오류: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "message": "업데이트 설치 중 오류가 발생했습니다.",
-            "error": str(e)
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "업데이트 설치 중 오류가 발생했습니다.",
+                    "error": str(e),
+                }
+            ),
+            500,
+        )
+
 
 @app.route("/api/device/history", methods=["GET"])
 def get_update_history():
-    """설치된 업데이트와 환불된 업데이트 이력 조회"""
+    """설치된 업데이트와 환불된 업데이트 이력 조회 (device_client 위임)"""
     if not device:
         return jsonify({"error": "디바이스 초기화에 실패했습니다"}), 500
     try:
-        # 설치된 업데이트 목록
-        installation_logs = device.get_update_history()
-        logger.info(f"[get_update_history] 설치된 업데이트 UID 목록: {[log['uid'] for log in installation_logs]}")
-        # 환불된 업데이트 목록
-        refunded_updates = device.get_refunded_updates()
-        logger.info(f"[get_update_history] 환불된 업데이트 UID 목록: {[u['uid'] for u in refunded_updates]}")
-
-        update_history = []
-        seen_uids = set()
-
-        # 설치된 업데이트 처리 (가격, 설명, 버전 포함)
-        for log in installation_logs:
-            uid = log["uid"]
-            if uid in seen_uids:
-                continue
-            # 블록체인에서 가격, 설명, 버전 정보 가져오기
-            try:
-                update_info = device.contract_http.functions.getUpdateInfo(uid).call()
-                price_wei = int(update_info[4])
-                price_eth = float(device.web3_http.from_wei(price_wei, "ether"))
-                description = update_info[3]
-                version = update_info[5]
-            except Exception as e:
-                logger.error(f"업데이트 정보 조회 실패(uid={uid}): {e}")
-                price_eth = None
-                description = None
-                version = None
-            item = {
-                "uid": uid,
-                "version": version,
-                "description": description,
-                "price_eth": price_eth,
-                "isInstalled": True,
-                "isRefunded": False,
-                "installedAt": log.get("timestamp"),  # 블록체인에서 가져온 시각
-                "refundedAt": None,
-            }
-            update_history.append(item)
-            seen_uids.add(uid)
-
-        # 환불만 된 항목(설치 안된 것) 추가 (가격, 설명, 버전 포함)
-        for refund in refunded_updates:
-            uid = refund["uid"]
-            item = {
-                "uid": uid,
-                "isInstalled": False,
-                "isRefunded": True,
-                "installedAt": None,
-                "refundedAt": refund.get("purchasedAt"),  # purchasedAt을 refundedAt으로 사용
-                "price_eth": float(device.web3_http.from_wei(int(refund.get("price", 0)), "ether")),
-                "description": refund.get("description"),
-                "version": refund.get("version")
-            }
-            update_history.append(item)
-
-        # 모든 이벤트를 발생 시각순으로 정렬
-        def get_event_time(item):
-            if item["isInstalled"]:
-                return item["installedAt"] or 0
-            else:
-                return item["refundedAt"] or 0  # refundedAt을 기준으로 정렬
-        
-        # 시각 기준 정렬 (최신순)
-        update_history.sort(key=get_event_time, reverse=True)
-        logger.info(f"[get_update_history] 정렬된 이력: {[(item['uid'], get_event_time(item)) for item in update_history]}")
+        update_history = device.get_owner_update_history()
         return jsonify({"history": update_history})
     except Exception as e:
         logger.error(f"업데이트 이력 조회 실패: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/notifications", methods=["GET"])
+def get_notifications():
+    """since=<id> 이후의 알림 목록 반환"""
+    since_id = request.args.get("since", default=0, type=int)
+    # since_id보다 큰 id의 알림만 반환
+    filtered = [n for n in notifications if n["id"] > since_id]
+    return jsonify({"notifications": filtered})
+
 
 if __name__ == "__main__":
     import eventlet

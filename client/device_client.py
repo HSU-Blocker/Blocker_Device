@@ -272,43 +272,40 @@ class IoTDeviceClient:
         - self.contract_api (HTTP)로 동기 호출
         - 이벤트 WebSocket과 충돌 없이 조회
         """
-        logger.info("[check_for_updates_http] 사용 가능한 업데이트 확인 중...")
+        logger.info("[check_for_updates_http] 사용 가능한 업데이트(미설치/미환불) 목록 조회 (getAvailableUpdatesForOwner)")
         updates = []
         try:
-            event_filter = self.contract_http.events.UpdateRegistered.create_filter(
-                from_block=0,
-                to_block='latest'
-            )
-            events = event_filter.get_all_entries()
+            # getAvailableUpdatesForOwner를 한 번만 호출하여 모든 정보 배열을 가져옴
+            result = self.contract_http.functions.getAvailableUpdatesForOwner().call({'from': self.owner_address})
+            # 반환값: (uids, ipfsHashes, encryptedKeys, hashOfUpdates, descriptions, prices, versions, isValids)
+            (
+                uids,
+                ipfs_hashes,
+                encrypted_keys,
+                hash_of_updates,
+                descriptions,
+                prices,
+                versions,
+                is_valids
+            ) = result
 
-            logger.info(f"[check_for_updates_http] 감지된 업데이트 UID: {[e.args.uid for e in events]}")
+            logger.info(f"[check_for_updates_http] 사용 가능한 업데이트 UID: {uids}")
 
-            for event in events:
-                uid = event["args"]["uid"]
-                logger.info(f"[check_for_updates_http] 업데이트 이벤트 - UID: {uid}")
-                uid_str = uid.hex() if isinstance(uid, bytes) else str(uid)
-                # 업데이트 정보 동기 call()
-                logger.info(f"[check_for_updates_http] getUpdateInfo 호출 - UID: {uid_str}")
-                try:
-                    update_info = self.contract_http.functions.getUpdateInfo(uid_str).call()
-                    if not update_info[6]:  # isValid가 False면 건너뜀
-                        continue
-                    update = {
-                        "uid": uid,
-                        "ipfsHash": update_info[0],
-                        "encryptedKey": base64.b64encode(update_info[1]).decode() if update_info[1] else "",
-                        "hashOfUpdate": update_info[2],
-                        "description": update_info[3],
-                        "price": update_info[4],
-                        "version": update_info[5]
-                    }
-                    updates.append(update)
-                    logger.info(f"[check_for_updates_http] 변환된 업데이트: uid={uid}, version={update_info[5]}")
-                except Exception as e:
-                    logger.error(f"[check_for_updates_http] update_info 처리 중 오류: {e}")
-                    logger.error(f"- uid: {uid_str}")
-                    logger.error(f"- update_info: {update_info if 'update_info' in locals() else 'not defined'}")
+            for i in range(len(uids)):
+                if not is_valids[i]:
                     continue
+                update = {
+                    "uid": uids[i],
+                    "ipfsHash": ipfs_hashes[i],
+                    "encryptedKey": base64.b64encode(encrypted_keys[i]).decode() if encrypted_keys[i] else "",
+                    "hashOfUpdate": hash_of_updates[i],
+                    "description": descriptions[i],
+                    "price": prices[i],
+                    "version": versions[i]
+                }
+                updates.append(update)
+            # 최신 등록순(최근 것이 위로)으로 반환
+            updates.reverse()
         except Exception as e:
             logger.error(f"[check_for_updates_http] 업데이트 확인 실패: {e}")
         return updates
@@ -456,6 +453,8 @@ class IoTDeviceClient:
                 logger.error(
                     f"해시 검증 실패: 계산된 해시 {calculated_hash} != 기대 해시 {hash_of_update}"
                 )
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": "업데이트 파일 해시 검증 실패", "refund": refund_result}
 
@@ -473,6 +472,8 @@ class IoTDeviceClient:
                 logger.info(f"복호화된 aes_key: {aes_key}, 타입: {type(aes_key)}")
             except Exception as e:
                 logger.error(f"대칭키 복호화 실패: {e}")
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"대칭키 복호화 실패: {e}", "refund": refund_result}
 
@@ -487,6 +488,8 @@ class IoTDeviceClient:
                 logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
+                if os.path.exists(update_path):
+                    os.remove(update_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"업데이트 파일 복호화 실패: {e}", "refund": refund_result}
 
@@ -693,6 +696,7 @@ class IoTDeviceClient:
             logger.info(f"[get_update_history] 감지된 설치 이력 UID: {[event.args.uid for event in events]}")
 
             history = []
+            block_cache = {}  # 블록 넘버별 캐시
             for event in events:
                 try:
                     # 이벤트에서 정보 추출
@@ -700,7 +704,7 @@ class IoTDeviceClient:
                     device_id = event.args.deviceId
                     
                     # 현재 디바이스의 설치 이력만 필터링
-                    logger.info(f"[get_update_history] 디바이스 ID 비교: event_device_id={device_id} (type={type(device_id)}), self.device_id={self.device_id} (type={type(self.device_id)})")
+                    # logger.info(f"[get_update_history] 디바이스 ID 비교: event_device_id={device_id} (type={type(device_id)}), self.device_id={self.device_id} (type={type(self.device_id)})")
                     
                     # device_id가 bytes 타입인 경우 문자열로 변환
                     if isinstance(device_id, bytes):
@@ -710,8 +714,11 @@ class IoTDeviceClient:
                         logger.info(f"[get_update_history] 다른 디바이스의 이력이므로 건너뜀: {device_id}")
                         continue
                     
-                    # 블록 타임스탬프 가져오기
-                    block = self.web3_http.eth.get_block(event.blockNumber)
+                    # 블록 타임스탬프 가져오기 (캐싱 활용)
+                    block_number = event.blockNumber
+                    if block_number not in block_cache:
+                        block_cache[block_number] = self.web3_http.eth.get_block(block_number)
+                    block = block_cache[block_number]
                     timestamp = block.timestamp
                     
                     # 업데이트 상세 정보 조회
@@ -724,10 +731,10 @@ class IoTDeviceClient:
                         "description": update_info[3],
                         "timestamp": timestamp,  # 블록체인에서 가져온 시각
                         "tx_hash": event.transactionHash.hex(),
-                        "block_number": event.blockNumber
+                        "block_number": block_number
                     }
                     history.append(history_item)
-                    logger.info(f"[get_update_history] 이력 추가: uid={uid}, block={event.blockNumber}")
+                    # logger.info(f"[get_update_history] 이력 추가: uid={uid}, block={event.blockNumber}")
                     
                 except Exception as e:
                     logger.error(f"[get_update_history] 이력 항목 처리 중 오류 - Event: {event}, 오류: {e}")
@@ -737,4 +744,43 @@ class IoTDeviceClient:
             return history
         except Exception as e:
             logger.error(f"[get_update_history] 설치 이력 조회 실패: {e}")
+            return []
+
+    def get_owner_update_history(self):
+        """
+        Solidity의 getOwnerUpdateHistory()를 호출해
+        구매/설치/환불 상태 및 시각, 업데이트 상세정보를 한 번에 반환
+        """
+        try:
+            # getOwnerUpdateHistory()는 UpdateHistory[] 구조를 반환
+            # 각 UpdateHistory: (uid, ipfsHash, encryptedKey, hashOfUpdate, description, price, version, isValid, isPurchased, isInstalled, isRefunded, purchaseTime, installTime, refundTime)
+            result = self.contract_http.functions.getOwnerUpdateHistory().call({'from': self.owner_address})
+            update_history = []
+            for item in result:
+                try:
+                    price_wei = int(item[5])
+                    price_eth = float(self.web3_http.from_wei(price_wei, "ether"))
+                except Exception:
+                    price_eth = None
+                update_history.append({
+                    "uid": item[0],
+                    "ipfsHash": item[1],
+                    "encryptedKey": base64.b64encode(item[2]).decode() if item[2] else "",
+                    "hashOfUpdate": item[3],
+                    "description": item[4],
+                    "price_eth": price_eth,
+                    "version": item[6],
+                    "isValid": item[7],
+                    "isPurchased": item[8],
+                    "isInstalled": item[9],
+                    "isRefunded": item[10],
+                    "purchasedAt": int(item[11]) if item[11] else None,
+                    "installedAt": int(item[12]) if item[12] else None,
+                    "refundedAt": int(item[13]) if item[13] else None
+                })
+            # 최신순 정렬 (구매시각 기준, 없으면 uid 기준)
+            update_history.sort(key=lambda x: x["purchasedAt"] or 0, reverse=True)
+            return update_history
+        except Exception as e:
+            logger.error(f"[get_owner_update_history] 오류: {e}")
             return []
