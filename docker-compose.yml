@@ -24,4 +24,4 @@ services:
     privileged: true         # 🔐 장치 접근 권한 부여
     volumes:
       - ./client/keys:/app/client/keys
-      # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+      - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
