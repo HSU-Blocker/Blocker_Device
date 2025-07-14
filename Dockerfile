@@ -1,7 +1,7 @@
 # 플랫폼 지정 및 Python 3.9-slim 이미지 사용
 FROM --platform=linux/arm64 python:3.9-slim
 
-# 기본 패키지 설치 (libgmp-dev 포함)
+# 기본 패키지 설치 및 오디오 장치 지원 추가 (libgmp-dev 포함)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     python3-dev \
     openssl \
+    ffmpeg \
+    portaudio19-dev \
+    libasound2-dev \
+    alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # 작업 디렉토리 설정
@@ -53,6 +57,9 @@ RUN pip install --upgrade pip && \
     pip install wheel && \
     pip install regex>=2022.3.15 && \
     pip install --no-cache-dir -r requirements.txt
+
+# huggingface_hub 설치 (huggingface-cli 포함됨)
+RUN pip install --no-cache-dir huggingface_hub
 
 # 필요한 추가 패키지 설치
 RUN pip install pycryptodome>=3.14.1 cryptography>=36.0.0

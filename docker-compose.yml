@@ -15,8 +15,13 @@ services:
       - MANUFACTURER_API_URL=http://52.78.52.216:5002
       - DEVICE_API_PORT=5002
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
+      - HF_TOKEN=${HF_TOKEN}
+      - TORCH_CPP_LOG_LEVEL=ERROR
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    devices:
+      - "/dev/snd:/dev/snd"  # 🔈 오디오 장치 바인딩
+    privileged: true         # 🔐 장치 접근 권한 부여
     volumes:
       - ./client/keys:/app/client/keys
-      - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+      # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
