@@ -68,6 +68,10 @@ def notify_new_update(uid, version, description):
 
 
 # 기기 클라이언트 인스턴스 생성
+from speech.stt import WhisperSTT
+
+whisper_stt_instance = None
+
 device = None
 try:
     device = IoTDeviceClient(
@@ -78,6 +82,12 @@ try:
         notification_callback=notify_new_update,
     )
     logger.info(f"IoT 기기 클라이언트 초기화 완료: {DEVICE_ID}")
+    # WhisperSTT 인스턴스도 서버 시작 시 미리 초기화 (모델 캐시 목적)
+    logger.info("[WhisperSTT] Whisper 모델 다운로드 및 초기화 시작...")
+    whisper_stt_instance = WhisperSTT(
+        initial_prompt="‘헤이 블로커’는 항상 음성의 첫 부분에 등장하며, 'Hey Blocker' 또는 '헤이 블로커'로 인식되어야 합니다."
+    )
+    logger.info("WhisperSTT 인스턴스 초기화 완료 (모델 캐시)")
 except Exception as e:
     logger.error(f"IoT 기기 클라이언트 초기화 실패: {e}")
 
@@ -351,6 +361,103 @@ def get_notifications():
     filtered = [n for n in notifications if n["id"] > since_id]
     return jsonify({"notifications": filtered})
 
+
+from speech.stt import WhisperSTT, load_audio
+import tempfile
+import os
+
+
+@app.route("/api/device/voice/stt", methods=["POST"])
+def api_voice_stt():
+    """
+    프론트에서 webm 음성 파일을 받아 원문(STT)과 언어감지 결과만 반환 (프론트 전용)
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file uploaded"}), 400
+    audio_file = request.files["audio"]
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+        tmp.write(audio_file.read())
+        tmp_path = tmp.name
+    try:
+        waveform = load_audio(tmp_path)
+        stt = whisper_stt_instance or WhisperSTT()
+        transcribed_text = stt.transcribe(waveform)
+        logger.info(f"transcribed_text : {transcribed_text}")
+        detected_lang = getattr(stt, "last_detected_language", None)
+        return jsonify(
+            {
+                "transcribed_text": transcribed_text,
+                "detected_lang": detected_lang,
+            }
+        )
+    finally:
+        os.remove(tmp_path)
+
+
+@app.route("/api/llm/voice/stt", methods=["POST"])
+def api_llm_voice_stt():
+    """
+    webm 음성 파일을 받아 영어 번역 텍스트와 언어감지 결과만 반환 (LLM/NLU 전용)
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file uploaded"}), 400
+    audio_file = request.files["audio"]
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+        tmp.write(audio_file.read())
+        tmp_path = tmp.name
+    try:
+        waveform = load_audio(tmp_path)
+        stt = whisper_stt_instance or WhisperSTT()
+        translated_text = stt.translate_to_english(waveform)
+        detected_lang = getattr(stt, "last_detected_language", None)
+        return jsonify(
+            {
+                "translated_text": translated_text,
+                "detected_lang": detected_lang,
+            }
+        )
+    finally:
+        os.remove(tmp_path)
+
+
+@app.route("/api/device/voice/tts", methods=["POST"])
+def api_voice_tts():
+    """
+    프론트에서 webm 음성 파일을 받아 STT→번역 후, 변환된 텍스트로 TTS 음성(wav) 파일을 반환
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file uploaded"}), 400
+    audio_file = request.files["audio"]
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+        tmp.write(audio_file.read())
+        tmp_path = tmp.name
+    try:
+        from pipeline import SpeechService
+        from tts import TTS
+
+        service = SpeechService()
+        with open(tmp_path, "rb") as f:
+            audio_bytes = f.read()
+        stt_text, detected_lang = service.audio_to_text(audio_bytes)
+        tts = TTS()
+        tts_audio = tts.synthesize(stt_text, language=detected_lang or "ko")
+        # 음성(wav) 파일을 바이너리로 직접 반환
+        from flask import send_file
+        import io as _io
+
+        return send_file(
+            _io.BytesIO(tts_audio),
+            mimetype="audio/wav",
+            as_attachment=True,
+            download_name="result.wav",
+        )
+    finally:
+        import os
+
+        os.remove(tmp_path)
+        
 
 if __name__ == "__main__":
     import eventlet

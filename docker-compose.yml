@@ -15,8 +15,10 @@ services:
       - MANUFACTURER_API_URL=http://52.78.52.216:5002
       - DEVICE_API_PORT=5002
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/electric-vision-465910-b0-fd08e1f02d86.json
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./client/keys:/app/client/keys
-      - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+      - ./backend/speech/:/app/backend/speech/
+      # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
