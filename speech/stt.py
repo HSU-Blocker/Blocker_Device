@@ -1,10 +1,8 @@
 from faster_whisper import WhisperModel
 import torchaudio
 import tempfile
-import torch
 import subprocess
 import os
-import io
 
 class WhisperSTT:
     def __init__(self, initial_prompt=None, model_size="base"):  # tiny, base, small 등 선택 가능
@@ -43,22 +41,24 @@ class WhisperSTT:
         self.last_detected_language = getattr(info, "language", None)
         return text.strip()
 
-def load_audio(input_path):
+def webm_bytes_to_tensor_waveform(audio_bytes, sample_rate=16000):
     """
-    다양한 오디오 포맷(webm, wav 등)을 16kHz waveform으로 변환하여 반환
+    webm bytes를 입력받아 STT용 waveform(torch.Tensor, 16kHz, (1, N))으로 변환
     """
-    if input_path.endswith(".webm"):
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+    try:
+        # ffmpeg로 webm → wav 변환 후 로드
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_wav:
             tmp_wav_path = tmp_wav.name
         subprocess.run([
-            "ffmpeg", "-y", "-i", input_path, "-ar", "16000", "-ac", "1", tmp_wav_path
+            "ffmpeg", "-y", "-i", tmp_path, "-ar", str(sample_rate), "-ac", "1", tmp_wav_path
         ], check=True)
         waveform, sr = torchaudio.load(tmp_wav_path)
         os.remove(tmp_wav_path)
-    else:
-        with open(input_path, "rb") as f:
-            audio_bytes = f.read()
-        waveform, sr = torchaudio.load(io.BytesIO(audio_bytes))
-    if sr != 16000:
-        waveform = torchaudio.functional.resample(waveform, sr, 16000)
+    finally:
+        os.remove(tmp_path)
+    if sr != sample_rate:
+        waveform = torchaudio.functional.resample(waveform, sr, sample_rate)
     return waveform

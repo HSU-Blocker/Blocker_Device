@@ -1,11 +1,13 @@
 import os
+import io
 import numpy as np
-import torch
+import torchaudio
 import sounddevice as sd
 from scipy.io.wavfile import write
 from resemblyzer import VoiceEncoder, preprocess_wav
 from pydub import AudioSegment
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -17,18 +19,44 @@ EMBEDDING_PATH = "data/reference_multi.npy"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def record_audio(filename: str):
-    print(f"\n🎙️ '{filename}' 음성 녹음 시작 ({RECORD_SECONDS}초)...")
-    audio = sd.rec(int(RECORD_SECONDS * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1, dtype='int16')
-    sd.wait()
-    write(filename, SAMPLE_RATE, audio)
-    print(f"✅ 녹음 완료: {filename}")
+def register_speaker_from_waveform(speaker_name: str, waveform: np.ndarray, sample_rate: int = SAMPLE_RATE):
+    """
+    waveform(float32 np.ndarray)와 speaker_name을 받아 임베딩을 저장
+    """
+    encoder = VoiceEncoder()
+    logging.info(f"화자 등록: {speaker_name} ({waveform.shape})")
+    preprocessed = preprocess_wav(waveform, sample_rate)
+    embedding = encoder.embed_utterance(preprocessed)
 
+    # 기존 임베딩 불러오기
+    if os.path.exists(EMBEDDING_PATH):
+        embeddings = np.load(EMBEDDING_PATH, allow_pickle=True).item()
+    else:
+        embeddings = {}
+
+    embeddings[speaker_name] = embedding
+    np.save(EMBEDDING_PATH, embeddings)
+    logging.info(f"💾 임베딩 저장 완료: '{speaker_name}' → {EMBEDDING_PATH}")
+    logging.info(f"[임베딩 등록 현황] 현재 등록된 화자: {list(embeddings.keys())}")
+    return True, speaker_name
+
+def webm_bytes_to_numpy_waveform(webm_bytes, sample_rate=16000):
+    """
+    webm bytes를 화자 등록/인식용 numpy waveform(float32, mono, sample_rate)로 변환
+    """
+    waveform, sr = torchaudio.load(io.BytesIO(webm_bytes))
+    if sr != sample_rate:
+        waveform = torchaudio.functional.resample(waveform, sr, sample_rate)
+    if waveform.shape[0] > 1:
+        waveform = waveform.mean(dim=0, keepdim=True)
+    return waveform.squeeze().numpy().astype(np.float32)
+
+
+## 테스트용
 def register_speaker(speaker_name: str):
     encoder = VoiceEncoder()
     
     wav_path = os.path.join(OUTPUT_DIR, f"{speaker_name}.wav")
-    record_audio(wav_path)
     
     # 오디오 로드 및 전처리
     audio = AudioSegment.from_wav(wav_path)
@@ -49,10 +77,3 @@ def register_speaker(speaker_name: str):
     embeddings[speaker_name] = embedding
     np.save(EMBEDDING_PATH, embeddings)
     print(f"💾 임베딩 저장 완료: '{speaker_name}' → {EMBEDDING_PATH}")
-
-if __name__ == "__main__":
-    speaker_name = input("\n등록할 화자 이름을 입력하세요: ").strip()
-    if speaker_name:
-        register_speaker(speaker_name)
-    else:
-        print("❗ 화자 이름이 입력되지 않았습니다.")
