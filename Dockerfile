@@ -7,20 +7,23 @@ RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
     echo "Acquire::BrokenProxy true;" >> /etc/apt/apt.conf.d/99custom && \
     apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    build-essential \
-    git \
-    libgmp-dev \
-    libssl-dev \
-    wget \
-    cmake \
-    flex \
-    bison \
-    autoconf \
-    libtool \
-    python3-dev \
-    openssl \
-    ffmpeg \
-    libsndfile1 \
+        build-essential \
+        git \
+        libgmp-dev \
+        libssl-dev \
+        wget \
+        cmake \
+        flex \
+        bison \
+        autoconf \
+        libtool \
+        python3-dev \
+        openssl \
+        ffmpeg \
+        libsndfile1 \
+        portaudio19-dev \
+        libasound2-dev \
+        alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # 작업 디렉토리 설정
@@ -65,7 +68,8 @@ RUN pip install --index-url https://download.pytorch.org/whl/cpu \
     torchaudio==2.1.0+cpu
 
 # Whisper base 모델을 미리 다운로드하여 캐시에 저장
-RUN pip install faster-whisper && python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8')"
+RUN pip install faster-whisper && \
+    python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8')"
 
 # Coqui TTS 및 관련 패키지 설치 주석처리
 # RUN pip install TTS==0.21.3
@@ -76,6 +80,12 @@ RUN pip install \
     pycryptodome>=3.14.1 \
     cryptography>=36.0.0 \
     --no-cache-dir -r requirements.txt
+
+# huggingface_hub 설치 (huggingface-cli 포함됨)
+RUN pip install --no-cache-dir huggingface_hub
+
+# 필요한 추가 패키지 설치
+RUN pip install pycryptodome>=3.14.1 cryptography>=36.0.0
 
 # 프로젝트 파일 복사
 COPY . .

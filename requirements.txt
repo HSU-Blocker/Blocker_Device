@@ -45,3 +45,33 @@ faster-whisper
 # 번역 관련
 googletrans==4.0.0-rc1
 google-cloud-texttospeech
+
+# 음성 처리
+pyannote.audio
+torch>=1.13.0
+torchaudio>=0.13.0
+transformers
+huggingface_hub
+librosa
+scipy
+pydub
+joblib
+numpy
+
+# 실시간 화자 인식
+resemblyzer
+pyaudio
+webrtcvad
+
+# 마이크 입력 및 파일 저장
+sounddevice
+soundfile
+
+# 성능 개선 및 지원 패키지
+numba
+
+# 시스템 설치 필요
+ffmpeg
+
+# env
+python-dotenv
