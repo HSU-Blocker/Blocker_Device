@@ -1,0 +1,63 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Python environment files
+.env
+.env.*
+
+# PyCharm / VSCode
+.idea/
+.vscode/
+
+# Rasa models
+models/
+*.tar.gz
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Mac OS / Windows
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Pip cache
+pip-wheel-metadata/
+pip-log.txt
+
+# Transformers cache
+.cache/
+huggingface/
+transformers_cache/
+torch_cache/
+*.pth
+
+# Coverage / test
+htmlcov/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Misc
+*.sqlite3
+*.db
+*.pid
+*.seed
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,62 @@
+version: "3.1"
+
+nlu:
+- intent: update_start
+  examples: |
+    - 업데이트 시작해
+    - 업데이트 시작
+    - 시작 업데이트
+    - start update
+    - begin update
+
+- intent: update_list
+  examples: |
+    - 업데이트 목록 보여줘
+    - 업데이트 뭐 있어
+    - 업데이트 리스트
+    - show update list
+    - list updates
+
+- intent: drive_forward
+  examples: |
+    - 직진해
+    - 앞으로 가
+    - move forward
+    - drive ahead
+    - go straight
+
+- intent: stop
+  examples: |
+    - 정지해
+    - 멈춰
+    - stop
+    - halt
+
+- intent: shutdown
+  examples: |
+    - 셧다운 해
+    - 꺼
+    - shutdown
+    - turn off the car
+
+- intent: go_hospital
+  examples: |
+    - 병원으로 가
+    - 병원에 가자
+    - go to the hospital
+    - drive to hospital
+
+- intent: go_company
+  examples: |
+    - 회사로 가
+    - 회사에 가자
+    - go to the office
+    - drive to company
+
+- intent: go_university
+  examples: |
+    - 대학으로 가
+    - 대학교로 가
+    - 학교에 가자
+    - go to university
+    - drive to school

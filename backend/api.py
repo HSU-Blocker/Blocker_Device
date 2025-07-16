@@ -409,14 +409,39 @@ def api_llm_voice_stt():
         return jsonify({"error": "audio file missing"}), 400
     audio_file = request.files["audio"]
     audio_bytes = audio_file.read()
+
+    # 1) STT + 화자인식
     result = voice_service.stt_and_speaker_recognition(audio_bytes)
+    
+    translated_text = result.get("translated_text")
+    # predicted_speaker = result.get("predicted_speaker")  # ex) junhee
+    # detected_lang = result.get("detected_lang")
+    speaker_type = result.get("speaker_type")  # ex) owner/known/unknown
+    # is_match = result.get("is_match")
+    
     # 등록되지 않은 사용자이면 403 반환
     if not result.get("is_match"):
         return jsonify({"error": "Speaker not recognized or not allowed."}), 403
 
+    # 2) Rasa에 sender=predicted_speaker, message=translated_text 로 의도 파악
+    rasa_response = requests.post(
+        "http://localhost:5005/webhooks/rest/webhook",
+        json={
+            "sender": speaker_type,
+            "message": translated_text
+        },
+        timeout=5
+    )
+    rasa_output = rasa_response.json()
+    print(f"[api_llm_voice_stt] Rasa 응답: {rasa_output}")
+
+    # Rasa는 [{ recipient_id, text }, ...] 구조니까
+    rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
+
+    # 프론트에 필요한 정보, 무슨 언어인지, 번역된 텍스트, 화자 정보
     response = {
         "detected_lang": result.get("detected_lang"),
-        "translated_text": result.get("translated_text"),
+        "translated_text": rasa_text,
         "speaker_type": result.get("speaker_type")
     }
     return jsonify(response)
