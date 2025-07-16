@@ -1,5 +1,5 @@
 # 플랫폼 지정 및 Python 3.9-slim 이미지 사용
-FROM --platform=linux/amd64 python:3.10-slim
+FROM --platform=linux/arm64 python:3.10-slim
 
 # APT 다운로드 문제 방지용 설정 추가 + 기본 패키지 설치
 RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
@@ -64,8 +64,8 @@ RUN pip install --upgrade pip wheel
 
 # CPU 버전의 PyTorch 먼저 설치 (더 빠르고 안정적)
 RUN pip install --index-url https://download.pytorch.org/whl/cpu \
-    torch==2.1.0+cpu \
-    torchaudio==2.1.0+cpu
+    torch==2.1.0 \
+    torchaudio==2.1.0
 
 # Whisper base 모델을 미리 다운로드하여 캐시에 저장
 RUN pip install faster-whisper && \

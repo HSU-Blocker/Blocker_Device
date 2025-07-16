@@ -18,6 +18,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/electric-vision-465910-b0-fd08e1f02d86.json
       - HF_TOKEN=${HF_TOKEN}
       - TORCH_CPP_LOG_LEVEL=ERROR
+      - DBUS_SESSION_BUS_ADDRESS=/dev/null
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # devices:
