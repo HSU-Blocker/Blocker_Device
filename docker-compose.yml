@@ -25,7 +25,7 @@ services:
     # privileged: true         # 🔐 장치 접근 권한 부여
     volumes:
       - ./client/keys:/app/client/keys
-      - ./backend/speech/:/app/backend/speech/ 
+      - ./data:/app/data
       # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
   
   #nlu, llm 추가 rsa -> nlu분류, rasa_action -> llm전달 및 차량제어, llm_fallback -> llm 통신

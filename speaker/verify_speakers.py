@@ -7,10 +7,6 @@ from collections import deque
 from resemblyzer import VoiceEncoder, preprocess_wav
 from scipy.spatial.distance import cosine
 
-'''
-화자인식
-등록된 사용자 인지 검증 및 사용자 식별
-'''
 
 SAMPLE_RATE = 16000
 FRAME_DURATION = 1  # 초 단위
@@ -19,6 +15,28 @@ WINDOW_DURATION = 3  # 누적 시간 (초)
 WINDOW_SIZE = FRAME_SIZE * WINDOW_DURATION
 SIMILARITY_THRESHOLD = 0.60
 
+def verify_speakers_from_waveform(np_waveform, embedding_path="data/reference_multi.npy"):
+    """
+    webm/wav 등에서 추출한 numpy waveform(np_waveform)을 받아 등록된 화자와 비교하여
+    (best_name, best_similarity, is_match) 반환
+    """
+    # 1. 임베딩 DB 로드
+    reference_embeddings = np.load(embedding_path, allow_pickle=True).item()
+    # 2. 입력 waveform 임베딩 추출
+    encoder = VoiceEncoder()
+    test_embedding = encoder.embed_utterance(preprocess_wav(np_waveform, SAMPLE_RATE))
+    # 3. 유사도 계산 후 가장 유사도가 높은 화자 이름, 유사도, 일치 여부 반환
+    results = []
+    for name, ref_emb in reference_embeddings.items():
+        similarity = 1 - cosine(ref_emb, test_embedding)
+        results.append((name, similarity))
+    results.sort(key=lambda x: x[1], reverse=True)
+    best_name, best_similarity = results[0]
+    is_match = best_similarity > SIMILARITY_THRESHOLD
+    return best_name, best_similarity, is_match
+
+
+## 테스트용
 def verify_speakers(reference_embeddings, test_embedding):
     results = []
     for name, ref_emb in reference_embeddings.items():

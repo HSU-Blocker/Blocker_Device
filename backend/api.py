@@ -362,102 +362,103 @@ def get_notifications():
     return jsonify({"notifications": filtered})
 
 
-from speech.stt import WhisperSTT, load_audio
-import tempfile
-import os
+from service.voice_service import VoiceService
+voice_service = VoiceService()
+
+@app.route("/api/device/voice/register", methods=["POST"])
+def api_voice_register():
+    """
+    사용자 등록용 음성 파일(webm)과 user_name을 받아 등록 처리 후 결과 반환
+    """
+    if "audio" not in request.files or "user_name" not in request.form:
+        return jsonify({"success": False, "error": "audio file or user_name missing"}), 400
+    audio_file = request.files["audio"]
+    user_name = request.form["user_name"]
+    audio_bytes = audio_file.read()
+    result = voice_service.register_speaker_from_webm(audio_bytes, user_name)
+    logger.info(f"/api/device/voice/register 응답 결과: {result}")
+    return jsonify(result)
 
 
 @app.route("/api/device/voice/stt", methods=["POST"])
 def api_voice_stt():
     """
-    프론트에서 webm 음성 파일을 받아 원문(STT)과 언어감지 결과만 반환 (프론트 전용)
+    프론트에서 webm 음성 파일을 받아 원문 텍스트, 언어감지, 화자 인식 결과 반환 (프론트 전용)
     """
     if "audio" not in request.files:
-        return jsonify({"error": "No audio file uploaded"}), 400
+        return jsonify({"error": "audio file missing"}), 400
     audio_file = request.files["audio"]
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-        tmp.write(audio_file.read())
-        tmp_path = tmp.name
-    try:
-        waveform = load_audio(tmp_path)
-        stt = whisper_stt_instance or WhisperSTT()
-        transcribed_text = stt.transcribe(waveform)
-        logger.info(f"transcribed_text : {transcribed_text}")
-        detected_lang = getattr(stt, "last_detected_language", None)
-        return jsonify(
-            {
-                "transcribed_text": transcribed_text,
-                "detected_lang": detected_lang,
-            }
-        )
-    finally:
-        os.remove(tmp_path)
+    audio_bytes = audio_file.read()
+    result = voice_service.stt_and_speaker_recognition(audio_bytes)
+
+    response = {
+        "transcribed_text": result.get("transcribed_text"),
+        "detected_lang": result.get("detected_lang"),
+        "is_match": bool(result.get("is_match")),  # numpy.bool_ → python bool 변환
+        "predicted_speaker": result.get("predicted_speaker")
+    }
+    return jsonify(response)
 
 
 @app.route("/api/llm/voice/stt", methods=["POST"])
 def api_llm_voice_stt():
     """
-    webm 음성 파일을 받아 영어 번역 텍스트와 언어감지 결과만 반환 (LLM/NLU 전용)
+    webm 음성 파일을 받아 영어 번역 텍스트, 언어감지, 화자 인식 결과 반환 (LLM/NLU 전용)
     """
     if "audio" not in request.files:
-        return jsonify({"error": "No audio file uploaded"}), 400
+        return jsonify({"error": "audio file missing"}), 400
     audio_file = request.files["audio"]
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-        tmp.write(audio_file.read())
-        tmp_path = tmp.name
-    try:
-        waveform = load_audio(tmp_path)
-        stt = whisper_stt_instance or WhisperSTT()
-        translated_text = stt.translate_to_english(waveform)
-        detected_lang = getattr(stt, "last_detected_language", None)
-        return jsonify(
-            {
-                "translated_text": translated_text,
-                "detected_lang": detected_lang,
-            }
-        )
-    finally:
-        os.remove(tmp_path)
+    audio_bytes = audio_file.read()
+    result = voice_service.stt_and_speaker_recognition(audio_bytes)
+    # 등록되지 않은 사용자이면 403 반환
+    if not result.get("is_match"):
+        return jsonify({"error": "Speaker not recognized or not allowed."}), 403
+
+    response = {
+        "detected_lang": result.get("detected_lang"),
+        "translated_text": result.get("translated_text"),
+        "speaker_type": result.get("speaker_type")
+    }
+    return jsonify(response)
 
 
-@app.route("/api/device/voice/tts", methods=["POST"])
-def api_voice_tts():
-    """
-    프론트에서 webm 음성 파일을 받아 STT→번역 후, 변환된 텍스트로 TTS 음성(wav) 파일을 반환
-    """
-    if "audio" not in request.files:
-        return jsonify({"error": "No audio file uploaded"}), 400
-    audio_file = request.files["audio"]
-    import tempfile
+# @app.route("/api/device/voice/tts", methods=["POST"])
+# def api_voice_tts():
+#     """
+#     프론트에서 webm 음성 파일을 받아 STT→번역 후, 변환된 텍스트로 TTS 음성(wav) 파일을 반환
+#     """
+#     if "audio" not in request.files:
+#         return jsonify({"error": "No audio file uploaded"}), 400
+#     audio_file = request.files["audio"]
+#     import tempfile
 
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-        tmp.write(audio_file.read())
-        tmp_path = tmp.name
-    try:
-        from pipeline import SpeechService
-        from tts import TTS
+#     with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+#         tmp.write(audio_file.read())
+#         tmp_path = tmp.name
+#     try:
+#         from pipeline import SpeechService
+#         from tts import TTS
 
-        service = SpeechService()
-        with open(tmp_path, "rb") as f:
-            audio_bytes = f.read()
-        stt_text, detected_lang = service.audio_to_text(audio_bytes)
-        tts = TTS()
-        tts_audio = tts.synthesize(stt_text, language=detected_lang or "ko")
-        # 음성(wav) 파일을 바이너리로 직접 반환
-        from flask import send_file
-        import io as _io
+#         service = SpeechService()
+#         with open(tmp_path, "rb") as f:
+#             audio_bytes = f.read()
+#         stt_text, detected_lang = service.audio_to_text(audio_bytes)
+#         tts = TTS()
+#         tts_audio = tts.synthesize(stt_text, language=detected_lang or "ko")
+#         # 음성(wav) 파일을 바이너리로 직접 반환
+#         from flask import send_file
+#         import io as _io
 
-        return send_file(
-            _io.BytesIO(tts_audio),
-            mimetype="audio/wav",
-            as_attachment=True,
-            download_name="result.wav",
-        )
-    finally:
-        import os
+#         return send_file(
+#             _io.BytesIO(tts_audio),
+#             mimetype="audio/wav",
+#             as_attachment=True,
+#             download_name="result.wav",
+#         )
+#     finally:
+#         import os
 
-        os.remove(tmp_path)
-        
+#         os.remove(tmp_path)
 
 if __name__ == "__main__":
     import eventlet
