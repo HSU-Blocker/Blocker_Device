@@ -379,47 +379,71 @@ def api_voice_register():
     logger.info(f"/api/device/voice/register 응답 결과: {result}")
     return jsonify(result)
 
+def get_stt_and_speaker_result(audio_bytes):
+    """stt_and_speaker_recognition 결과를 캐싱해서 반환"""
+    return voice_service.stt_and_speaker_recognition(audio_bytes)
+
+llm_result_cache = {}
+
+def call_llm_and_store(result, speaker_key):
+    llm_payload = {
+        "sender": result.get("speaker_type"),
+        "message": result.get("translated_text")
+    }
+    try:
+        rasa_response = requests.post(
+            "http://localhost:5005/webhooks/rest/webhook",
+            json=llm_payload,
+            timeout=5
+        )
+        if rasa_response.ok:
+            rasa_output = rasa_response.json()
+            # Rasa는 [{ recipient_id, text }, ...] 구조니까
+            rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
+            llm_result_cache[speaker_key] = {"text": rasa_text}
+        else:
+            llm_result_cache[speaker_key] = {"error": f"Rasa error: {rasa_response.status_code}"}
+    except Exception as e:
+        llm_result_cache[speaker_key] = {"error": str(e)}
 
 @app.route("/api/device/voice/stt", methods=["POST"])
 def api_voice_stt():
     """
     프론트에서 webm 음성 파일을 받아 원문 텍스트, 언어감지, 화자 인식 결과 반환 (프론트 전용)
+    LLM 결과는 별도 API로 제공
     """
     if "audio" not in request.files:
         return jsonify({"error": "audio file missing"}), 400
     audio_file = request.files["audio"]
     audio_bytes = audio_file.read()
-    result = voice_service.stt_and_speaker_recognition(audio_bytes)
+    result = get_stt_and_speaker_result(audio_bytes)
 
     response = {
         "transcribed_text": result.get("transcribed_text"),
         "detected_lang": result.get("detected_lang"),
-        "is_match": bool(result.get("is_match")),  # numpy.bool_ → python bool 변환
+        "is_match": bool(result.get("is_match")),
         "predicted_speaker": result.get("predicted_speaker")
     }
+    # speaker_key는 predicted_speaker + timestamp 등으로 유니크하게 생성 가능
+    speaker_key = f"{result.get('predicted_speaker','unknown')}_{int(time.time()*1000)}"
+    response["llm_key"] = speaker_key
+    # LLM 호출을 백그라운드로 실행
+    threading.Thread(target=call_llm_and_store, args=(result, speaker_key)).start()
     return jsonify(response)
 
 
-@app.route("/api/llm/voice/stt", methods=["POST"])
-def api_llm_voice_stt():
+@app.route("/api/device/voice/llm_result", methods=["GET"])
+def get_llm_result():
     """
-    webm 음성 파일을 받아 영어 번역 텍스트, 언어감지, 화자 인식 결과 반환 (LLM/NLU 전용)
+    프론트가 llm_key로 LLM 결과를 가져가는 API
     """
-    if "audio" not in request.files:
-        return jsonify({"error": "audio file missing"}), 400
-    audio_file = request.files["audio"]
-    audio_bytes = audio_file.read()
-    result = voice_service.stt_and_speaker_recognition(audio_bytes)
-    # 등록되지 않은 사용자이면 403 반환
-    if not result.get("is_match"):
-        return jsonify({"error": "Speaker not recognized or not allowed."}), 403
-
-    response = {
-        "detected_lang": result.get("detected_lang"),
-        "translated_text": result.get("translated_text"),
-        "speaker_type": result.get("speaker_type")
-    }
-    return jsonify(response)
+    llm_key = request.args.get("llm_key")
+    if not llm_key:
+        return jsonify({"error": "llm_key is required"}), 400
+    result = llm_result_cache.get(llm_key)
+    if result is None:
+        return jsonify({"status": "pending"})
+    return jsonify({"llm_result": result})
 
 
 # @app.route("/api/device/voice/tts", methods=["POST"])
