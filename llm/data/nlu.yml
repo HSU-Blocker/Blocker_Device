@@ -1,62 +1,91 @@
 version: "3.1"
 
 nlu:
-- intent: update_start
+- intent: greet
   examples: |
-    - 업데이트 시작해
-    - 업데이트 시작
-    - 시작 업데이트
-    - start update
-    - begin update
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - moin
+    - hey there
+    - let's go
+    - hey dude
+    - goodmorning
+    - goodevening
+    - good afternoon
 
-- intent: update_list
+- intent: goodbye
   examples: |
-    - 업데이트 목록 보여줘
-    - 업데이트 뭐 있어
-    - 업데이트 리스트
-    - show update list
-    - list updates
+    - cu
+    - good by
+    - cee you later
+    - good night
+    - bye
+    - goodbye
+    - have a nice day
+    - see you around
+    - bye bye
+    - see you later
 
-- intent: drive_forward
+- intent: affirm
   examples: |
-    - 직진해
-    - 앞으로 가
-    - move forward
-    - drive ahead
-    - go straight
+    - yes
+    - y
+    - indeed
+    - of course
+    - that sounds good
+    - correct
 
-- intent: stop
+- intent: deny
   examples: |
-    - 정지해
-    - 멈춰
-    - stop
-    - halt
+    - no
+    - n
+    - never
+    - I don't think so
+    - don't like that
+    - no way
+    - not really
 
-- intent: shutdown
+- intent: mood_great
   examples: |
-    - 셧다운 해
-    - 꺼
-    - shutdown
-    - turn off the car
+    - perfect
+    - great
+    - amazing
+    - feeling like a king
+    - wonderful
+    - I am feeling very good
+    - I am great
+    - I am amazing
+    - I am going to save the world
+    - super stoked
+    - extremely good
+    - so so perfect
+    - so good
+    - so perfect
 
-- intent: go_hospital
+- intent: mood_unhappy
   examples: |
-    - 병원으로 가
-    - 병원에 가자
-    - go to the hospital
-    - drive to hospital
+    - my day was horrible
+    - I am sad
+    - I don't feel very well
+    - I am disappointed
+    - super sad
+    - I'm so sad
+    - sad
+    - very sad
+    - unhappy
+    - not good
+    - not very good
+    - extremly sad
+    - so saad
+    - so sad
 
-- intent: go_company
+- intent: bot_challenge
   examples: |
-    - 회사로 가
-    - 회사에 가자
-    - go to the office
-    - drive to company
-
-- intent: go_university
-  examples: |
-    - 대학으로 가
-    - 대학교로 가
-    - 학교에 가자
-    - go to university
-    - drive to school
+    - are you a bot?
+    - are you a human?
+    - am I talking to a bot?
+    - am I talking to a human?

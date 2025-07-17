@@ -1,7 +1,18 @@
-FROM python:3.10-slim
+FROM --platform=linux/amd64 python:3.8-slim
 
-RUN apt-get update && apt-get install -y gcc
-RUN pip install requests rasa==3.5.10 rasa-sdk==3.5.0 transformers torch==2.1.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip && \
+    pip install \
+        tensorflow==2.11.0 \
+        tensorflow-addons==0.19.0 && \
+    pip install \
+        requests \
+        rasa==3.5.10 \
+        rasa-sdk==3.5.0 \
+        transformers \
+        torch==2.1.0 \
+        --extra-index-url https://download.pytorch.org/whl/cpu
 
 WORKDIR /app
 COPY . /app

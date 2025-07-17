@@ -4,13 +4,13 @@ recipe: default.v1
 
 # The assistant project unique identifier
 # This default value must be replaced with a unique assistant name within your deployment
-assistant_id: 20250702-113054-jovial-screen
+assistant_id: placeholder_default
 
 # Configuration for Rasa NLU.
 # https://rasa.com/docs/rasa/nlu/components/
-language: ko
+language: en
 
-pipeline: 
+pipeline:
 # # No configuration for the NLU pipeline was provided. The following default pipeline was used to train your model.
 # # If you'd like to customize it, uncomment and adjust the pipeline.
 # # See https://rasa.com/docs/rasa/tuning-your-model for more information.
@@ -19,22 +19,16 @@ pipeline:
 #   - name: LexicalSyntacticFeaturizer
 #   - name: CountVectorsFeaturizer
 #   - name: CountVectorsFeaturizer
-    - name: WhitespaceTokenizer
-    - name: CountVectorsFeaturizer
-    - name: DIETClassifier
-      epochs: 100
 #     analyzer: char_wb
 #     min_ngram: 1
 #     max_ngram: 4
 #   - name: DIETClassifier
-      # epochs: 100
-#     constrain_similarities: true
-    - name: EntitySynonymMapper
-    - name: ResponseSelector
-      epochs: 100
-#     constrain_similarities: true
-    - name: FallbackClassifier
-      threshold: 0.8
+#     epochs: 100
+#   - name: EntitySynonymMapper
+#   - name: ResponseSelector
+#     epochs: 100
+#   - name: FallbackClassifier
+#     threshold: 0.3
 #     ambiguity_threshold: 0.1
 
 # Configuration for Rasa Core.
@@ -43,11 +37,8 @@ policies:
 # # No configuration for policies was provided. The following default policies were used to train your model.
 # # If you'd like to customize them, uncomment and adjust the policies.
 # # See https://rasa.com/docs/rasa/policies for more information.
-    - name: MemoizationPolicy
-    - name: RulePolicy
-      core_fallback_action_name: "action_default_fallback"
-    - name: UnexpecTEDIntentPolicy
-      max_history: 5
-      epochs: 100
+#   - name: MemoizationPolicy
 #   - name: TEDPolicy
-#     constrain_similarities: true
+#     max_history: 5
+#     epochs: 100
+#   - name: RulePolicy

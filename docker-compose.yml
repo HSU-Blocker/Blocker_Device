@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  app-network:
+    driver: bridge
+
 services:
   device:
     build: .
@@ -28,29 +32,36 @@ services:
       - ./client/keys:/app/client/keys
       - ./data:/app/data
       # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+    networks:
+      - app-network
   
   #nlu, llm 추가 rsa -> nlu분류, rasa_action -> llm전달 및 차량제어, llm_fallback -> llm 통신
   rasa:
-    image: rasa/rasa:3.5.10
+    image: rasa/rasa:3.6.2
     container_name: rasa_app
     volumes:
       - ./llm:/app
-    command: run --enable-api --port 5005
+    command: run --enable-api --port 5005 --debug
     ports:
       - "5005:5005"
     depends_on:
       - rasa_action
+    networks:
+      - app-network
   rasa_action:
     build: ./llm/actions
     ports:
       - "5055:5055"
     container_name: rasa_action_server
+    networks:
+      - app-network
 
   llm_fallback:
     build: ./llm_fallback
     ports:
-      - "5000:5000"
+      - "5010:5000"
     container_name: llm_fallback_server
     environment:
       - HF_TOKEN=${HF_TOKEN}
-
+    networks:
+      - app-network
