@@ -85,7 +85,7 @@ try:
     # WhisperSTT 인스턴스도 서버 시작 시 미리 초기화 (모델 캐시 목적)
     logger.info("[WhisperSTT] Whisper 모델 다운로드 및 초기화 시작...")
     whisper_stt_instance = WhisperSTT(
-        initial_prompt="‘헤이 블로커’는 항상 음성의 첫 부분에 등장하며, 'Hey Blocker' 또는 '헤이 블로커'로 인식되어야 합니다."
+        initial_prompt="음성이 'Hey Blocker' 또는 '헤이 블로커'로 시작됩니다."
     )
     logger.info("WhisperSTT 인스턴스 초기화 완료 (모델 캐시)")
 except Exception as e:
@@ -386,25 +386,29 @@ def get_stt_and_speaker_result(audio_bytes):
 llm_result_cache = {}
 
 def call_llm_and_store(result, speaker_key):
+    logging.info(f"[LLM] 호출 시작 - speaker_key: {speaker_key}, payload: {{'sender': {result.get('speaker_type')}, 'message': {result.get('translated_text')}}}")
     llm_payload = {
         "sender": result.get("speaker_type"),
         "message": result.get("translated_text")
     }
     try:
         rasa_response = requests.post(
-            "http://localhost:5005/webhooks/rest/webhook",
+            "http://rasa:5005/webhooks/rest/webhook",
             json=llm_payload,
             timeout=5
         )
         if rasa_response.ok:
             rasa_output = rasa_response.json()
-            # Rasa는 [{ recipient_id, text }, ...] 구조니까
             rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
             llm_result_cache[speaker_key] = {"text": rasa_text}
+            logging.info(f"[LLM] 성공 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_output}")
         else:
             llm_result_cache[speaker_key] = {"error": f"Rasa error: {rasa_response.status_code}"}
+            logging.error(f"[LLM] 실패 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_response.text}")
     except Exception as e:
         llm_result_cache[speaker_key] = {"error": str(e)}
+        import traceback
+        logging.error(f"[LLM] 예외 발생 - speaker_key: {speaker_key}, error: {e}\n{traceback.format_exc()}")
 
 @app.route("/api/device/voice/stt", methods=["POST"])
 def api_voice_stt():
@@ -428,6 +432,7 @@ def api_voice_stt():
     speaker_key = f"{result.get('predicted_speaker','unknown')}_{int(time.time()*1000)}"
     response["llm_key"] = speaker_key
     # LLM 호출을 백그라운드로 실행
+    logging.info(f"LLM 호출 스레드 시작 - speaker_key: {speaker_key}")
     threading.Thread(target=call_llm_and_store, args=(result, speaker_key)).start()
     return jsonify(response)
 
