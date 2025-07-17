@@ -1,33 +1,46 @@
 version: "3.1"
 
 intents:
-  - greet
-  - goodbye
-  - affirm
-  - deny
-  - mood_great
-  - mood_unhappy
-  - bot_challenge
+  - update_start
+  - update_list
+  - drive_forward
+  - stop
+  - shutdown
+  - go_hospital
+  - go_company
+  - go_university
 
 responses:
-  utter_greet:
-  - text: "Hey! How are you?"
+  utter_update_start:
+    - text: "업데이트를 시작합니다."
+  utter_update_list:
+    - text: "업데이트 목록을 조회합니다."
+  utter_drive_forward:
+    - text: "차량이 직진합니다."
+  utter_stop:
+    - text: "차량을 정지합니다."
+  utter_shutdown:
+    - text: "차량을 셧다운합니다."
+  utter_go_hospital:
+    - text: "병원으로 이동합니다."
+  utter_go_company:
+    - text: "회사로 이동합니다."
+  utter_go_university:
+    - text: "대학교로 이동합니다."
+  utter_default:
+    - text: "죄송해요. 잘 이해하지 못했어요."
 
-  utter_cheer_up:
-  - text: "Here is something to cheer you up:"
-    image: "https://i.imgur.com/nGF1K8f.jpg"
+actions:
+  - action_update_start
+  - action_update_list
+  - action_drive_forward
+  - action_stop
+  - action_shutdown
+  - action_go_hospital
+  - action_go_company
+  - action_go_university
+  - action_default_fallback
 
-  utter_did_that_help:
-  - text: "Did that help you?"
-
-  utter_happy:
-  - text: "Great, carry on!"
-
-  utter_goodbye:
-  - text: "Bye"
-
-  utter_iamabot:
-  - text: "I am a bot, powered by Rasa."
 
 session_config:
   session_expiration_time: 60

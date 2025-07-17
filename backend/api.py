@@ -393,7 +393,7 @@ def call_llm_and_store(result, speaker_key):
     }
     try:
         rasa_response = requests.post(
-            "http://rasa_app:5005/webhooks/rest/webhook",
+            "http://rasa:5005/webhooks/rest/webhook",
             json=llm_payload,
             timeout=5
         )

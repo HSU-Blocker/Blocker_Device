@@ -15,5 +15,7 @@ RUN pip install --index-url https://download.pytorch.org/whl/cpu \
 # 기본 PyPI 인덱스로 일반 패키지 설치
 RUN pip install flask transformers
 
+RUN pip install flask transformers torch
+
 EXPOSE 5000
 CMD ["python", "app.py"]

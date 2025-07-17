@@ -25,9 +25,6 @@ services:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # devices:
-    #   - "/dev/snd:/dev/snd"  # 🔈 오디오 장치 바인딩
-    # privileged: true         # 🔐 장치 접근 권한 부여
     volumes:
       - ./client/keys:/app/client/keys
       - ./data:/app/data
@@ -48,6 +45,7 @@ services:
       - rasa_action
     networks:
       - app-network
+
   rasa_action:
     build: ./llm/actions
     ports:
