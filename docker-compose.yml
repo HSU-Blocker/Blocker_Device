@@ -47,7 +47,10 @@ services:
     container_name: rasa_action_server
 
   llm_fallback:
-    build: ./llm_fallback
+    build:
+      context: ./llm_fallback
+      args:
+        HF_TOKEN: ${HF_TOKEN}
     ports:
       - "5000:5000"
     container_name: llm_fallback_server

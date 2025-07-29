@@ -386,7 +386,11 @@ def get_stt_and_speaker_result(audio_bytes):
 llm_result_cache = {}
 
 def call_llm_and_store(result, speaker_key):
+<<<<<<< HEAD
     logging.info(f"[LLM] 호출 시작 - speaker_key: {speaker_key}, payload: {{'sender': {result.get('speaker_type')}, 'message': {result.get('translated_text')}}}")
+=======
+    logging.info(f"[NLU] 호출 시작 - speaker_key: {speaker_key}, payload: {{'sender': {result.get('speaker_type')}, 'message': {result.get('translated_text')}}}")
+>>>>>>> 862c15e (fix: nlu model)
     llm_payload = {
         "sender": result.get("speaker_type"),
         "message": result.get("translated_text")
@@ -401,6 +405,7 @@ def call_llm_and_store(result, speaker_key):
             rasa_output = rasa_response.json()
             rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
             llm_result_cache[speaker_key] = {"text": rasa_text}
+<<<<<<< HEAD
             logging.info(f"[LLM] 성공 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_output}")
         else:
             llm_result_cache[speaker_key] = {"error": f"Rasa error: {rasa_response.status_code}"}
@@ -409,6 +414,16 @@ def call_llm_and_store(result, speaker_key):
         llm_result_cache[speaker_key] = {"error": str(e)}
         import traceback
         logging.error(f"[LLM] 예외 발생 - speaker_key: {speaker_key}, error: {e}\n{traceback.format_exc()}")
+=======
+            logging.info(f"[NLU] 성공 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_output}")
+        else:
+            llm_result_cache[speaker_key] = {"error": f"Rasa error: {rasa_response.status_code}"}
+            logging.error(f"[NLU] 실패 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_response.text}")
+    except Exception as e:
+        llm_result_cache[speaker_key] = {"error": str(e)}
+        import traceback
+        logging.error(f"[NLU] 예외 발생 - speaker_key: {speaker_key}, error: {e}\n{traceback.format_exc()}")
+>>>>>>> 862c15e (fix: nlu model)
 
 @app.route("/api/device/voice/stt", methods=["POST"])
 def api_voice_stt():
@@ -443,6 +458,9 @@ def get_llm_result():
     프론트가 llm_key로 LLM 결과를 가져가는 API
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 862c15e (fix: nlu model)
     llm_key = request.args.get("llm_key")
     if not llm_key:
         return jsonify({"error": "llm_key is required"}), 400
@@ -450,6 +468,7 @@ def get_llm_result():
     if result is None:
         return jsonify({"status": "pending"})
     return jsonify({"llm_result": result})
+<<<<<<< HEAD
 =======
     if "audio" not in request.files:
         return jsonify({"error": "audio file missing"}), 400
@@ -492,6 +511,8 @@ def get_llm_result():
     }
     return jsonify(response)
 >>>>>>> c84b4f6 (Add: NLU, LLM service files)
+=======
+>>>>>>> 862c15e (fix: nlu model)
 
 
 # @app.route("/api/device/voice/tts", methods=["POST"])
