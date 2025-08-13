@@ -106,6 +106,21 @@ nlu:
     - show update list
     - list updates
 
+- intent: install_update_uid
+  examples: |
+    - [a1b2c3](update_uid) 업데이트 설치해 줘
+    - [XYZ123](update_uid)를 설치해 줘
+    - [uid999](update_uid) 설치
+    - [UID45678](update_uid) 이거 설치해    
+
+- regex: update_uid
+  examples: |
+    - [a1b2c3](update_uid)
+    - [XYZ123](update_uid)
+    - [uid999](update_uid)
+    - [UID45678](update_uid)
+    - [A-Za-z0-9]{6,}(update_uid)    
+
 - intent: drive_forward
   examples: |
     - 직진해

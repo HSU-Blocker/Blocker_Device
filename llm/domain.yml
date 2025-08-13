@@ -2,6 +2,7 @@ version: "3.1"
 
 intents:
   - update_start
+  - install_update_uid
   - update_list
   - drive_forward
   - stop
@@ -10,11 +11,25 @@ intents:
   - go_company
   - go_university
 
+entities:
+  - update_uid
+
+slots:
+  update_uid:
+    type: text
+    influence_conversation: true 
+    mappings:
+      - type: from_entity
+        entity: update_uid
+
+
 responses:
   utter_update_start:
-    - text: "업데이트를 시작합니다."
+    - text: "가장 최신 버전 업데이트를 시작합니다."
   utter_update_list:
     - text: "업데이트 목록을 조회합니다."
+  utter_update_uid:
+    - text: "선택하신 버전의 업데이트를 시작합니다."
   utter_drive_forward:
     - text: "차량이 직진합니다."
   utter_stop:
@@ -33,6 +48,7 @@ responses:
 actions:
   - action_update_start
   - action_update_list
+  - action_update_uid
   - action_drive_forward
   - action_stop
   - action_shutdown

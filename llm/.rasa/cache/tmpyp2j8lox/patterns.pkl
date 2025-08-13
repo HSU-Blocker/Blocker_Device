@@ -1,0 +1,22 @@
+[
+  {
+    "name": "update_uid",
+    "pattern": "[A-Za-z0-9]{6,}(update_uid)"
+  },
+  {
+    "name": "update_uid",
+    "pattern": "[UID45678](update_uid)"
+  },
+  {
+    "name": "update_uid",
+    "pattern": "[XYZ123](update_uid)"
+  },
+  {
+    "name": "update_uid",
+    "pattern": "[a1b2c3](update_uid)"
+  },
+  {
+    "name": "update_uid",
+    "pattern": "[uid999](update_uid)"
+  }
+]
