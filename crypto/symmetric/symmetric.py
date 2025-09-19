@@ -42,6 +42,7 @@ class SymmetricCrypto:
             # 원래 확장자 추출 (".enc" 바로 앞 부분의 확장자)
             base, _ = os.path.splitext(encrypted_file_path)   # (update_xxx.py, .enc)
             decrypted_file_path = base                        # update_xxx.py
+            logger.info(f".enc 확장자 복원 완료: {decrypted_file_path}")
         else:
             decrypted_file_path = encrypted_file_path
 
