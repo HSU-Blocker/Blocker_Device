@@ -43,13 +43,16 @@ def register_speaker_from_waveform(speaker_name: str, waveform: np.ndarray, samp
 def webm_bytes_to_numpy_waveform(webm_bytes, sample_rate=16000):
     """
     webm bytes를 화자 등록/인식용 numpy waveform(float32, mono, sample_rate)로 변환
-    """
-    waveform, sr = torchaudio.load(io.BytesIO(webm_bytes))
-    if sr != sample_rate:
-        waveform = torchaudio.functional.resample(waveform, sr, sample_rate)
-    if waveform.shape[0] > 1:
-        waveform = waveform.mean(dim=0, keepdim=True)
-    return waveform.squeeze().numpy().astype(np.float32)
+    """    
+    # WebM → PCM 변환
+    audio = AudioSegment.from_file(io.BytesIO(webm_bytes), format="webm")
+    
+    # mono + 원하는 sample_rate 변환
+    audio = audio.set_channels(1).set_frame_rate(sample_rate)
+
+    # numpy waveform 변환
+    samples = np.array(audio.get_array_of_samples()).astype(np.float32) / (1 << 15)
+    return samples
 
 
 ## 테스트용
