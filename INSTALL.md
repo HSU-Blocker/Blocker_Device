@@ -91,4 +91,4 @@ to other IoT devices (e.g., Raspberry Pi).
 
 ---
 
-If you encounter any issues, please report them via [Issues](https://github.com/your-org/Blocker_Device/issues).
+If you encounter any issues, please report them via [Issues](https://github.com/HSU-Blocker/Blocker_Device/issues).
