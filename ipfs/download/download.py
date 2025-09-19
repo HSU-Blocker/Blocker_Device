@@ -58,6 +58,7 @@ class IPFSDownloader:
                 client.get(ipfs_hash, temp_dir)
 
             downloaded_file = os.path.join(temp_dir, ipfs_hash)
+            logger.info(f"다운로드 받은 파일: {downloaded_file}")
 
             if os.path.isdir(downloaded_file):
                 files = os.listdir(downloaded_file)

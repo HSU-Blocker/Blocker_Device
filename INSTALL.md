@@ -25,8 +25,9 @@ Create a .env file in the root directory of the project with the following conte
 FLASK_ENV=development
 
 # Blockchain Configuration
-WEB3_PROVIDER={YOUR_WEB3_PROVIDER}
-WEB3_WS_PROVIDER=ws://{YOUR_WEB3_PROVIDER}
+WEB3_PROVIDER=http://blockchain-server-ganache-1:8545
+WEB3_WS_PROVIDER=ws://blockchain-server-ganache-1:8545
+
 # Use one of the default development accounts provided by Ganache
 PRIVATE_KEY={YOUR_PRIVATE_KEY}
 ACCOUNT_ADDRESS={YOUR_ACCOUNT_ADDRESS}
@@ -35,11 +36,11 @@ CONTRACT_ABI_PATH=/blockchain/contract_address.json
 
 # IPFS Configuration
 IPFS_API=/dns/ipfs/tcp/5001/http   # For ipfshttpclient
-IPFS_GATEWAY={YOUR_IPFS_GATEWAY}   # For HTTP downloads
+IPFS_GATEWAY=http://ipfs_node:8080  # For HTTP downloads
 
 # Ports
-DEVICE_API_PORT={YOUR_DEVICE_API_PORT}
-MANUFACTURER_API_PORT={YOUR_MANUFACTURER_API_PORT}
+DEVICE_API_PORT=5500
+MANUFACTURER_API_PORT=5001
 
 # IoT Device Example Settings
 OWNER_ADDRESS={YOUR_OWNER_ADDRESS}
@@ -47,7 +48,7 @@ OWNER_PRIVATE_KEY={YOUR_OWNER_PRIVATE_KEY}
 PUBLIC_KEY={YOUR_BLOCKCHAIN_PUBLIC_KEY}
 
 # Manufacturer API URL
-MANUFACTURER_API_URL={YOUR_MANUFACTURER_API_URL}
+MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5001
 
 # Coqui TTS License Agreement
 COQUI_TOS_AGREED=1
@@ -56,36 +57,32 @@ COQUI_TOS_AGREED=1
 HF_TOKEN={YOUR_HF_TOKEN}
 ```
 
-## 3. Generate a Google Cloud service account key and add it to the project root
-
-Make sure to rename the issued file to `electric-vision-465910-b0-fd08e1f02d86.json`.
-
-## 4. Docker Setup
+## 3. Docker Setup
 
 This project uses a Python 3.10-slim (arm64) Docker image to set up
 the runtime environment for IoT device execution on Ubuntu.
 
-### 4.1 Build the containers
+### 3.1 Build the containers
 ```sh
 docker-compose build
 ```
 
-### 4.2 Run the containers
+### 3.2 Run the containers
 ```sh
 docker-compose up
 ```
 
-### 4.3 Run in detached mode (background)
+### 3.3 Run in detached mode (background)
 ```sh
 docker-compose up -d
 ```
 
-### 4.4 Run in detached mode with build
+### 3.4 Run in detached mode with build
 ```sh
 docker-compose up -d --build
 ```
 
-### 4.5 Stop the containers
+### 3.5 Stop the containers
 ```sh
 docker-compose down
 ```

@@ -73,17 +73,13 @@ pdm.lock
 .pdm-python
 .pdm-build/
 
-# PyCharm
-# JetBrains.gitignore을 참고
-#.idea/
-
 # Blockchain 관련
 *.pem
 *.key
 wallet/
 node_modules/
 blockchain/private/
-*_address.json
+# *_address.json
 # *.bin
 
 # Docker 관련

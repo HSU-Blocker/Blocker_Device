@@ -16,36 +16,35 @@ When the manufacturer registers a new software update on the blockchain, the dev
 ## Development Environment  
 <img width="742" height="380" alt="image" src="https://github.com/user-attachments/assets/8f67a5bd-9917-4593-90d0-11d954df52f7" />
 
-- **AIoT AutoCar Prime X**
-  - AiOT AutoCar Prime X is equipped with the high-performance AI module Nvidia Jetson Xavier NX, providing sufficient computing power for artificial intelligence applications. It comes with the Pop.AI library, which allows learners to easily explore AI concepts and apply them to the car through various practical exercises and projects. The platform supports diverse sensors and peripherals such as cameras, microphones, 6-axis sensors, vehicle chassis, and speakers, enabling users to experiment with a wide range of AI-driven ideas.
-  - In our project, we utilized this car as the IoT device to allow device owners to subscribe to and implement the manufacturer’s software updates, specifically focusing on autonomous driving functions. While we demonstrated our system on the AutoCar Prime X, the service is also designed to be compatible with other IoT devices such as Raspberry Pi.
-- ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)  
-- ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)  
-- ![Python](https://img.shields.io/badge/Python_3.10--slim_(arm64)-3776AB?style=flat&logo=python&logoColor=white)  Configured a Docker-based Ubuntu environment using the **Python 3.10-slim (arm64)** image
-- ![VSCode](https://img.shields.io/badge/Visual_Studio_Code-007ACC?style=flat&logo=visualstudiocode&logoColor=white)  
+- **IoT Device**: **AIoT AutoCar Prime X**
+  - AiOT AutoCar Prime X is an AI-enabled model car equipped with the Nvidia Jetson Xavier NX module, offering sufficient computing power to run advanced applications.
+
+  - In our project, we chose this car as the IoT device because the manufacturer’s update files were designed to deliver autonomous driving services. The device was set up to subscribe to these updates, so that each update installation would add new autonomous driving features. While we demonstrated our system on the AutoCar Prime X, the service is also designed to be compatible with other IoT devices such as Raspberry Pi.
+- **OS**: ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)  ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)  
+- **Programming Language**: ![Python](https://img.shields.io/badge/Python_3.10--slim_(arm64)-3776AB?style=flat&logo=python&logoColor=white)  
+  - Configured a Docker-based Ubuntu environment using the **Python 3.10-slim (arm64)** image  
+- **Development Tools**: ![VSCode](https://img.shields.io/badge/Visual_Studio_Code-007ACC?style=flat&logo=visualstudiocode&logoColor=white)  
 
 ## Technology Stack
-- ![Blockchain](https://img.shields.io/badge/Blockchain-121D33?style=flat&logo=blockchaindotcom&logoColor=white)  Manage update IDs, hashes, and encrypted keys securely on the blockchain  
+- ![Blockchain](https://img.shields.io/badge/Blockchain-121D33?style=flat&logo=blockchaindotcom&logoColor=white)  Upload **the signature, update price, version, description, hash of the encrypted file, IPFS hash, and the encrypted symmetric key** to the blockchain.
 
-- ![Smart Contract](https://img.shields.io/badge/Smart_Contract-2C3E50?style=flat&logo=ethereum&logoColor=white)  Establish agreements between manufacturer and device, automating update management  
+- ![Smart Contract](https://img.shields.io/badge/Smart_Contract-2C3E50?style=flat&logo=ethereum&logoColor=white)  **Ensure atomic** software distribution and purchase between manufacturer and device 
 
 - ![ECDSA](https://img.shields.io/badge/ECDSA_Signature-34495E?style=flat&logo=lock&logoColor=white)  Verify update request and installation integrity using **ECDSA signature validation**  
 
-- ![Web3](https://img.shields.io/badge/Web3-F16822?style=flat&logo=web3dotjs&logoColor=white)  Interact with the blockchain using Web3 libraries  
+- ![Web3](https://img.shields.io/badge/Web3-F16822?style=flat&logo=web3dotjs&logoColor=white)  **Interact with the blockchain using Web3** libraries  
 
-- ![IPFS](https://img.shields.io/badge/IPFS_File_Download-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with distributed storage support  
+- ![IPFS](https://img.shields.io/badge/IPFS_File_Download-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with **distributed storage** support  
 
-- ![AES-256](https://img.shields.io/badge/AES--256_Decryption-006699?style=flat&logo=databricks&logoColor=white)  Decrypt update files using AES-256 to retrieve the original file  
+- ![AES-256](https://img.shields.io/badge/AES--256_Decryption-006699?style=flat&logo=databricks&logoColor=white)  **Decrypt update files** using AES-256 symmetric key to retrieve the original file  
 
-- ![CP-ABE](https://img.shields.io/badge/CP--ABE_Key_Management-6C3483?style=flat&logo=academia&logoColor=white)  
-  Decrypt CP-ABE–encrypted update keys to enforce access control policies.  
-  Implemented using the [Charm-Crypto](https://github.com/JHUISI/charm) library for advanced cryptographic 
+- ![CP-ABE](https://img.shields.io/badge/CP--ABE_Key_Management-6C3483?style=flat&logo=academia&logoColor=white)  Decrypt the encrypted symmetric key using CP-ABE with the device’s secret key, **ensuring that decryption is only possible when the key matches the update policy defined by the manufacturer.**
 
-- ![SHA3-256](https://img.shields.io/badge/SHA3--256_Hash_Verification-117A65?style=flat&logo=datadog&logoColor=white)  Verify file integrity by comparing **SHA3-256 hash** with blockchain values  
+- ![SHA3-256](https://img.shields.io/badge/SHA3--256_Hash_Verification-117A65?style=flat&logo=datadog&logoColor=white)  **Verify file integrity** by comparing SHA3-256 hash with blockchain values  
 
-- ![WebSocket](https://img.shields.io/badge/WebSocket_Event_Listener-008080?style=flat&logo=socketdotio&logoColor=white)  Detect blockchain events in real-time for update monitoring  
+- ![WebSocket](https://img.shields.io/badge/WebSocket_Event_Listener-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
 
-- ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device backend server built with Flask  
+- ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask  
 
 ## Installation
 See [INSTALL.md](./INSTALL.md) for installation and usage instructions.
@@ -57,17 +56,17 @@ backend/
 blockchain/
 └── registry_address.json       # Blockchain registry address/config
 client/
-├── device_client.py            # Device client runner script
+├── device_client.py            # Implements the device update process
 └── keys/
-    ├── device_secret_key_file.bin  # Device private key
-    └── public_key.bin              # Debice Manufacturer Public key
+    ├── device_secret_key_file.bin  # Device CP-ABE private key
+    └── public_key.bin              # Device Manufacturer Public key
 crypto/
 ├── cpabe/
 │   └── cpabe.py                 # CP-ABE (attribute-based encryption) implementation
 ├── hash/
-│   └── hash.py                  # Hash utilities
+│   └── hash.py                  # SHA3-256 Hash utilities
 └── symmetric/
-    └── symmetric.py             # Symmetric-key encryption utilities
+    └── symmetric.py             # AES-256 Symmetric-key encryption utilities
 ipfs/
 └── download/
     └── download.py             # IPFS download logic
@@ -85,3 +84,5 @@ This project is licensed under the MIT License. See [LICENSE](./LICENSE) for det
 Contributions and questions are always welcome through Issues and Pull Requests.  
 For detailed contribution guidelines, please refer to the following file:  
 [Contribution Guide](https://github.com/HSU-Blocker/Blocker_Device?tab=contributing-ov-file)
+
+For more information about the overall project, visit the [HSU-Blocker GitHub organization](https://github.com/HSU-Blocker).
