@@ -1,23 +1,23 @@
 version: '3.8'
 
-networks:
-  app-network:
-    driver: bridge
+# networks:
+#   app-network:
+#     driver: bridge
 
 services:
   device:
     build: .
     platform: linux/arm64  # Platform specification to match Dockerfile
     ports:
-      - "5002:5002"
+      - "5050:5050"
     environment:
       - FLASK_ENV=development
-      - WEB3_PROVIDER=http://52.78.52.216:8545
-      - WEB3_WS_PROVIDER=ws://52.78.52.216:8545
-      - IPFS_API=/ip4/52.78.52.216/tcp/5001/http # ipfshttpclient용
-      - IPFS_GATEWAY=http://52.78.52.216:8080  # HTTP 다운로드용
-      - MANUFACTURER_API_URL=http://52.78.52.216:5002
-      - DEVICE_API_PORT=5002
+      - WEB3_PROVIDER=http://blockchain-server-ganache-1:8545
+      - WEB3_WS_PROVIDER=ws://blockchain-server-ganache-1:8545
+      - IPFS_API=/dns/ipfs/tcp/5001/http  # ipfshttpclient 연결용
+      - IPFS_GATEWAY=http://ipfs_node:8080  # 게이트웨이 다운로드용
+      - MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5001
+      - DEVICE_API_PORT=5050
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
       - GOOGLE_APPLICATION_CREDENTIALS=/app/electric-vision-465910-b0-fd08e1f02d86.json
       - HF_TOKEN=${HF_TOKEN}
@@ -29,6 +29,7 @@ services:
       - ./client/keys:/app/client/keys
       - ./data:/app/data
       # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
+      - ./client/updates:/app/client/updates   # 업데이트 파일을 client/updates 디렉토리에 저장
     networks:
       - app-network
   
@@ -66,3 +67,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     networks:
       - app-network
+
+networks:
+  app-network:
+    external: true    # 이미 만들어둔 네트워크를 공유

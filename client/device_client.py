@@ -288,7 +288,6 @@ class IoTDeviceClient:
                 versions,
                 is_valids
             ) = result
-
             logger.info(f"[check_for_updates_http] 사용 가능한 업데이트 UID: {uids}")
 
             for i in range(len(uids)):
@@ -410,7 +409,6 @@ class IoTDeviceClient:
             encrypted_key_json = encrypted_key_bytes.decode("utf-8")
             hash_of_update = update_info["hashOfUpdate"]
 
-            # IPFS에서 업데이트 파일 다운로드
             # 1. IPFS에서 암호화된 업데이트 파일(Es) 다운로드
             ipfs_downloader = IPFSDownloader()
             update_path = os.path.join(self.update_dir, str(uid))
@@ -483,9 +481,13 @@ class IoTDeviceClient:
                 decrypted_bj = SymmetricCrypto.decrypt_file(update_path, aes_key)
                 logger.info(f"decrypted_bj 업데이트 파일 복호화 성공: {decrypted_bj}")
                 
-                # 호스트 시스템에서의 실제 경로를 로그로 출력
-                host_path = f"/soda/Blocker/sy/{os.path.basename(update_path)}"
-                logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
+                # # 호스트 시스템에서의 실제 경로를 로그로 출력
+                # # host_path = f"/soda/Blocker/sy/{os.path.basename(update_path)}"
+                # host_path = f"/soda/Blocker/sy/{os.path.basename(update_path)}"
+                # logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
+                
+                logger.info(f"업데이트 파일이 호스트 시스템 내부에 저장됨: {update_path}")
+    
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
                 if os.path.exists(update_path):
@@ -495,9 +497,6 @@ class IoTDeviceClient:
 
             # 5. 업데이트 설치
             logger.info(f"업데이트 설치 시작 - 버전: {update_info['version']}")
-
-            # 실제 설치 과정 (여기서는 시뮬레이션)
-            # time.sleep(2)
 
             # 6. 블록체인에 설치 완료 내역 기록
             confirmation_result = self.confirm_installation(uid)

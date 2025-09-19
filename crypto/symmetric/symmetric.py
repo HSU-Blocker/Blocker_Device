@@ -37,7 +37,14 @@ class SymmetricCrypto:
             raise ValueError("패딩 오류: 데이터가 올바르지 않음 (복호화 실패)")
 
         # 복호화된 파일 저장
-        decrypted_file_path = encrypted_file_path.replace(".enc", "")
+        # 확장자 복원 로직
+        if encrypted_file_path.endswith(".enc"):
+            # 원래 확장자 추출 (".enc" 바로 앞 부분의 확장자)
+            base, _ = os.path.splitext(encrypted_file_path)   # (update_xxx.py, .enc)
+            decrypted_file_path = base                        # update_xxx.py
+        else:
+            decrypted_file_path = encrypted_file_path
+
         with open(decrypted_file_path, "wb") as file:
             file.write(decrypted_data)
 
