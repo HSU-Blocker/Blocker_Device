@@ -56,28 +56,36 @@ COQUI_TOS_AGREED=1
 HF_TOKEN={YOUR_HF_TOKEN}
 ```
 
+## 3. Generate a Google Cloud service account key and add it to the project root
 
-## 3. Docker Setup
+Make sure to rename the issued file to `electric-vision-465910-b0-fd08e1f02d86.json`.
+
+## 4. Docker Setup
 
 This project uses a Python 3.10-slim (arm64) Docker image to set up
 the runtime environment for IoT device execution on Ubuntu.
 
-### 3.1 Build the containers
+### 4.1 Build the containers
 ```sh
 docker-compose build
 ```
 
-### 3.2 Run the containers
+### 4.2 Run the containers
 ```sh
 docker-compose up
 ```
 
-### 3.3 Run in detached mode (background)
+### 4.3 Run in detached mode (background)
 ```sh
 docker-compose up -d
 ```
 
-### 3.4 Stop the containers
+### 4.4 Run in detached mode with build
+```sh
+docker-compose up -d --build
+```
+
+### 4.5 Stop the containers
 ```sh
 docker-compose down
 ```

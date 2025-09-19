@@ -60,7 +60,7 @@ client/
 ├── device_client.py            # Device client runner script
 └── keys/
     ├── device_secret_key_file.bin  # Device private key
-    └── public_key.bin              # Public key
+    └── public_key.bin              # Debice Manufacturer Public key
 crypto/
 ├── cpabe/
 │   └── cpabe.py                 # CP-ABE (attribute-based encryption) implementation
