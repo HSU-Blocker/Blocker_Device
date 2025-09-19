@@ -14,8 +14,8 @@ services:
       - FLASK_ENV=development
       - WEB3_PROVIDER=http://blockchain-server-ganache-1:8545
       - WEB3_WS_PROVIDER=ws://blockchain-server-ganache-1:8545
-      - IPFS_API=/dns/ipfs/tcp/5001/http  # ipfshttpclient 연결용
-      - IPFS_GATEWAY=http://ipfs_node:8080  # 게이트웨이 다운로드용
+      - IPFS_API=/dns/ipfs/tcp/5001/http   # ipfshttpclient 연결용
+      - IPFS_GATEWAY=http://ipfs_node:8080     # 게이트웨이 다운로드용
       - MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5001
       - DEVICE_API_PORT=5050
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging

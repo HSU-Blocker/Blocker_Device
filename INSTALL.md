@@ -35,7 +35,7 @@ CONTRACT_ADDRESS={YOUR_CONTRACT_ADDRESS}
 CONTRACT_ABI_PATH=/blockchain/contract_address.json
 
 # IPFS Configuration
-IPFS_API=/dns/ipfs/tcp/5001/http   # For ipfshttpclient
+IPFS_API=/dns4/ipfs_node/tcp/5001   # For ipfshttpclient
 IPFS_GATEWAY=http://ipfs_node:8080  # For HTTP downloads
 
 # Ports

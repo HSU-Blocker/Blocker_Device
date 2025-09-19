@@ -411,12 +411,11 @@ class IoTDeviceClient:
 
             # 1. IPFS에서 암호화된 업데이트 파일(Es) 다운로드
             ipfs_downloader = IPFSDownloader()
-            update_path = os.path.join(self.update_dir, str(uid))
 
             try:
                 logger.info(f"IPFS에서 암호화된 파일 다운로드 시작: {ipfs_hash}")
-                download_result = ipfs_downloader.download_file(ipfs_hash, update_path)
-                if not download_result:
+                update_file_path = ipfs_downloader.download_file(ipfs_hash, self.update_dir, uid)
+                if not update_file_path:
                     refund_result = self.refund_update(uid)
                     return {
                         "success": False,
@@ -428,35 +427,34 @@ class IoTDeviceClient:
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"다운로드 실패: {e}", "refund": refund_result}
 
-            if not os.path.exists(update_path):
+            # 다운로드된 파일 검증
+            if not os.path.exists(update_file_path):
                 logger.info("다운로드된 파일이 없습니다.")
-            elif os.path.getsize(update_path) == 0:
+            elif os.path.getsize(update_file_path) == 0:
                 logger.info("다운로드된 파일 크기가 0입니다.")
             else:
-                logger.info(f"다운로드된 파일 크기: {os.path.getsize(update_path)} bytes")
+                logger.info(f"다운로드된 파일 크기: {os.path.getsize(update_file_path)} bytes")
 
-            # 파일 내용 읽기
-            with open(update_path, "rb") as file:
-                file_content = file.read(64)  # 처음 64바이트만 읽음
+            # 파일 내용 일부 출력
+            with open(update_file_path, "rb") as file:
+                file_content = file.read(64)
 
-            logger.info(f"다운로드된 파일 내용 (처음 64바이트): {file_content.hex()}")  # HEX 출력
-            logger.info(f"원본 텍스트 (일부): {file_content[:64].decode(errors='ignore')}")  # 텍스트로 변환
+            logger.info(f"다운로드된 파일 내용 (처음 64바이트): {file_content.hex()}")
+            logger.info(f"원본 텍스트 (일부): {file_content[:64].decode(errors='ignore')}")
 
-            logger.info(f"업데이트 파일 다운로드 완료 - 경로: {update_path}")
+            logger.info(f"업데이트 파일 다운로드 완료 - 경로: {update_file_path}")
 
-            # 2. SHA-3 해시 검증(hEbj)
+            # 2. SHA-3 해시 검증
             logger.info("암호화된 파일 해시 검증 시작")
-            calculated_hash = HashTools.sha3_hash_file(update_path)
+            calculated_hash = HashTools.sha3_hash_file(update_file_path)
             if calculated_hash != hash_of_update:
-                logger.error(
-                    f"해시 검증 실패: 계산된 해시 {calculated_hash} != 기대 해시 {hash_of_update}"
-                )
-                if os.path.exists(update_path):
-                    os.remove(update_path)
+                logger.error(f"해시 검증 실패: 계산된 해시 {calculated_hash} != 기대 해시 {hash_of_update}")
+                os.remove(update_file_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": "업데이트 파일 해시 검증 실패", "refund": refund_result}
 
             logger.info("해시 검증 성공")
+
             
             # 3. CP-ABE로 암호화된 대칭키(Ec) 복호화하여 대칭키(kbj) 획득
             try:
@@ -470,15 +468,15 @@ class IoTDeviceClient:
                 logger.info(f"복호화된 aes_key: {aes_key}, 타입: {type(aes_key)}")
             except Exception as e:
                 logger.error(f"대칭키 복호화 실패: {e}")
-                if os.path.exists(update_path):
-                    os.remove(update_path)
+                if os.path.exists(update_file_path):
+                    os.remove(update_file_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"대칭키 복호화 실패: {e}", "refund": refund_result}
 
             # 4. 대칭키 aes_key로 업데이트 파일(Es) 복호화하여 원본 업데이트 파일(bj) 획득
             try:
                 logger.info("대칭키로 업데이트 파일 복호화 시작")
-                decrypted_bj = SymmetricCrypto.decrypt_file(update_path, aes_key)
+                decrypted_bj = SymmetricCrypto.decrypt_file(update_file_path, aes_key)
                 logger.info(f"decrypted_bj 업데이트 파일 복호화 성공: {decrypted_bj}")
                 
                 # # 호스트 시스템에서의 실제 경로를 로그로 출력
@@ -486,12 +484,18 @@ class IoTDeviceClient:
                 # host_path = f"/soda/Blocker/sy/{os.path.basename(update_path)}"
                 # logger.info(f"업데이트 파일이 호스트 시스템에 저장됨: {host_path}")
                 
-                logger.info(f"업데이트 파일이 호스트 시스템 내부에 저장됨: {update_path}")
+                # 암호화된 임시 파일 삭제
+                if os.path.exists(update_file_path):
+                    os.remove(update_file_path)
+                    logger.info(f"✅ 암호화된 임시 파일 삭제 완료: {update_file_path}")
+
+                # 복호화된 파일의 저장 경로 로그 출력
+                logger.info(f"업데이트 파일이 호스트 시스템 내부에 저장됨: {decrypted_bj}")
     
             except Exception as e:
                 logger.error(f"업데이트 파일 복호화 실패: {e}")
-                if os.path.exists(update_path):
-                    os.remove(update_path)
+                if os.path.exists(update_file_path):
+                    os.remove(update_file_path)
                 refund_result = self.refund_update(uid)
                 return {"success": False, "message": f"업데이트 파일 복호화 실패: {e}", "refund": refund_result}
 
