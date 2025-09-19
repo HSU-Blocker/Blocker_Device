@@ -48,7 +48,40 @@ When the manufacturer registers a new software update on the blockchain, the dev
 - ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device backend server built with Flask  
 
 ## Installation
+See [INSTALL.md](./INSTALL.md) for installation and usage instructions.
 
 ## Directory Structure
+```
+backend/
+├── api.py                      # Backend API entry point
+blockchain/
+└── registry_address.json       # Blockchain registry address/config
+client/
+├── device_client.py            # Device client runner script
+└── keys/
+    ├── device_secret_key_file.bin  # Device private key
+    └── public_key.bin              # Public key
+crypto/
+├── cpabe/
+│   └── cpabe.py                 # CP-ABE (attribute-based encryption) implementation
+├── hash/
+│   └── hash.py                  # Hash utilities
+└── symmetric/
+    └── symmetric.py             # Symmetric-key encryption utilities
+ipfs/
+└── download/
+    └── download.py             # IPFS download logic
+Dockerfile                      # Root application Docker build config
+docker-compose.yml              # Service orchestration config
+requirements.txt                # Python dependencies list
+```
 
 ## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+---
+
+Contributions and questions are always welcome through Issues and Pull Requests.  
+For detailed contribution guidelines, please refer to the following file:  
+[Contribution Guide](https://github.com/HSU-Blocker/Blocker_Device?tab=contributing-ov-file)
