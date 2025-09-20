@@ -48,7 +48,7 @@ OWNER_PRIVATE_KEY={YOUR_OWNER_PRIVATE_KEY}
 PUBLIC_KEY={YOUR_BLOCKCHAIN_PUBLIC_KEY}
 
 # Manufacturer API URL
-MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5001
+MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5002
 
 # Coqui TTS License Agreement
 COQUI_TOS_AGREED=1
