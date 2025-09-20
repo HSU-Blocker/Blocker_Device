@@ -39,8 +39,8 @@ IPFS_API=/dns4/ipfs_node/tcp/5001   # For ipfshttpclient
 IPFS_GATEWAY=http://ipfs_node:8080  # For HTTP downloads
 
 # Ports
-DEVICE_API_PORT=5500
-MANUFACTURER_API_PORT=5001
+DEVICE_API_PORT=5050
+MANUFACTURER_API_PORT=5002
 
 # IoT Device Example Settings
 OWNER_ADDRESS={YOUR_OWNER_ADDRESS}
