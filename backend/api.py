@@ -44,7 +44,7 @@ DEVICE_ID = os.getenv("DEVICE_ID", "blocker_device_001")
 MODEL = os.getenv("DEVICE_MODEL", "VS500")
 SERIAL = os.getenv("DEVICE_SERIAL", "KMHEM42APXA752012")
 VERSION = os.getenv("DEVICE_VERSION", "1.0.0")
-PORT = int(os.getenv("DEVICE_API_PORT", 5002))
+PORT = int(os.getenv("DEVICE_API_PORT", 5050))
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
 
 # 알림 저장소 (메모리)

@@ -39,8 +39,8 @@ IPFS_API=/dns4/ipfs_node/tcp/5001   # For ipfshttpclient
 IPFS_GATEWAY=http://ipfs_node:8080  # For HTTP downloads
 
 # Ports
-DEVICE_API_PORT=5500
-MANUFACTURER_API_PORT=5001
+DEVICE_API_PORT=5050
+MANUFACTURER_API_PORT=5002
 
 # IoT Device Example Settings
 OWNER_ADDRESS={YOUR_OWNER_ADDRESS}
@@ -48,7 +48,7 @@ OWNER_PRIVATE_KEY={YOUR_OWNER_PRIVATE_KEY}
 PUBLIC_KEY={YOUR_BLOCKCHAIN_PUBLIC_KEY}
 
 # Manufacturer API URL
-MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5001
+MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5002
 
 # Coqui TTS License Agreement
 COQUI_TOS_AGREED=1
