@@ -52,27 +52,34 @@ See [INSTALL.md](./INSTALL.md) for installation and usage instructions.
 ## Directory Structure
 ```
 backend/
-├── api.py                      # Backend API entry point
+│   └── api.py                         # Backend API entry point
+│
 blockchain/
-└── registry_address.json       # Blockchain registry address/config
+│   └── registry_address.json           # Blockchain registry address/config
+│
 client/
-├── device_client.py            # Implements the device update process
-└── keys/
-    ├── device_secret_key_file.bin  # Device CP-ABE private key
-    └── public_key.bin              # Device Manufacturer Public key
+│   ├── device_client.py                # Implements the device update process
+│   └── keys/
+│       ├── device_secret_key_file.bin  # Device CP-ABE private key
+│       └── public_key.bin              # Device Manufacturer Public key
+│
 crypto/
-├── cpabe/
-│   └── cpabe.py                 # CP-ABE (attribute-based encryption) implementation
-├── hash/
-│   └── hash.py                  # SHA3-256 Hash utilities
-└── symmetric/
-    └── symmetric.py             # AES-256 Symmetric-key encryption utilities
+│   ├── cpabe/
+│   │   └── cpabe.py                    # CP-ABE (attribute-based encryption) implementation
+│   │
+│   ├── hash/
+│   │   └── hash.py                     # SHA3-256 Hash utilities
+│   │
+│   └── symmetric/
+│       └── symmetric.py                # AES-256 Symmetric-key encryption utilities
+│
 ipfs/
-└── download/
-    └── download.py             # IPFS download logic
-Dockerfile                      # Root application Docker build config
-docker-compose.yml              # Service orchestration config
-requirements.txt                # Python dependencies list
+│   └── download/
+│       └── download.py                 # IPFS download logic
+│
+Dockerfile                              # Root application Docker build config
+docker-compose.yml                      # Service orchestration config
+requirements.txt                        # Python dependencies list
 ```
 
 ## License
@@ -81,8 +88,10 @@ This project is licensed under the MIT License. See [LICENSE](./LICENSE) for det
 
 ---
 
-Contributions and questions are always welcome through Issues and Pull Requests.  
-For detailed contribution guidelines, please refer to the following file:  
-[Contribution Guide](https://github.com/HSU-Blocker/Blocker_Device?tab=contributing-ov-file)
+Contributions and questions are always welcome through Issues and Pull Requests.
+For detailed contribution guidelines, please refer to the [Contribution Guide](https://github.com/HSU-Blocker/Blocker_Device?tab=contributing-ov-file).
 
+---
+
+Contributions and questions are welcome via Issues and Pull Requests.
 For more information about the overall project, visit the [HSU-Blocker GitHub organization](https://github.com/HSU-Blocker).
