@@ -1,9 +1,5 @@
 version: '3.8'
 
-# networks:
-#   app-network:
-#     driver: bridge
-
 services:
   device:
     build: .
@@ -12,10 +8,10 @@ services:
       - "5050:5050"
     environment:
       - FLASK_ENV=development
-      - WEB3_PROVIDER=http://blockchain-server-ganache-1:8545
-      - WEB3_WS_PROVIDER=ws://blockchain-server-ganache-1:8545
-      - IPFS_API=/dns/ipfs/tcp/5001/http   # ipfshttpclient 연결용
-      - IPFS_GATEWAY=http://ipfs_node:8080     # 게이트웨이 다운로드용
+      - WEB3_PROVIDER=http://host.docker.internal:8545
+      - WEB3_WS_PROVIDER=ws://host.docker.internal:8545
+      - IPFS_API=/dns/host.docker.internal/tcp/5001/http # ipfshttpclient 연결용
+      - IPFS_GATEWAY=http://host.docker.internal:8080     # 게이트웨이 다운로드용
       - MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5002
       - DEVICE_API_PORT=5050
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
@@ -31,7 +27,7 @@ services:
       # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
       - ./client/updates:/app/client/updates   # 업데이트 파일을 client/updates 디렉토리에 저장
     networks:
-      - app-network
+      - app-network-device
   
   #nlu, llm 추가 rsa -> nlu분류, rasa_action -> llm전달 및 차량제어, llm_fallback -> llm 통신
   rasa:
@@ -45,7 +41,7 @@ services:
     depends_on:
       - rasa_action
     networks:
-      - app-network
+      - app-network-device
 
   rasa_action:
     build: ./llm/actions
@@ -53,7 +49,7 @@ services:
       - "5055:5055"
     container_name: rasa_action_server
     networks:
-      - app-network
+      - app-network-device
 
   llm_fallback:
     build:
@@ -66,8 +62,8 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN}
     networks:
-      - app-network
+      - app-network-device
 
 networks:
-  app-network:
-    external: bridge    # 이미 만들어둔 네트워크를 공유
+  app-network-device:
+    driver: bridge
