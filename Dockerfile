@@ -90,8 +90,8 @@ RUN pip install pycryptodome>=3.14.1 cryptography>=36.0.0
 # 프로젝트 파일 복사
 COPY . .
 
-# # Google Cloud 서비스 계정 키 복사 (파일명은 실제 파일명에 맞게 수정)
-# COPY electric-vision-465910-b0-fd08e1f02d86.json /app/your-service-account-file.json
+# Google Cloud 서비스 계정 키 복사 (파일명은 실제 파일명에 맞게 수정)
+COPY electric-vision-465910-b0-fd08e1f02d86.json /app/your-service-account-file.json
 
 # Flask 앱 실행
 EXPOSE 5050
