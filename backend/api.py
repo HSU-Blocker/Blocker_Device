@@ -44,7 +44,7 @@ DEVICE_ID = os.getenv("DEVICE_ID", "blocker_device_001")
 MODEL = os.getenv("DEVICE_MODEL", "VS500")
 SERIAL = os.getenv("DEVICE_SERIAL", "KMHEM42APXA752012")
 VERSION = os.getenv("DEVICE_VERSION", "1.0.0")
-PORT = int(os.getenv("DEVICE_API_PORT", 5050))
+PORT = int(os.getenv("DEVICE_API_PORT", 5002))
 MANUFACTURER_API_URL = os.getenv("MANUFACTURER_API_URL")
 
 # 알림 저장소 (메모리)
@@ -68,10 +68,6 @@ def notify_new_update(uid, version, description):
 
 
 # 기기 클라이언트 인스턴스 생성
-from speech.stt import WhisperSTT
-
-whisper_stt_instance = None
-
 device = None
 try:
     device = IoTDeviceClient(
@@ -82,12 +78,6 @@ try:
         notification_callback=notify_new_update,
     )
     logger.info(f"IoT 기기 클라이언트 초기화 완료: {DEVICE_ID}")
-    # WhisperSTT 인스턴스도 서버 시작 시 미리 초기화 (모델 캐시 목적)
-    logger.info("[WhisperSTT] Whisper 모델 다운로드 및 초기화 시작...")
-    whisper_stt_instance = WhisperSTT(
-        initial_prompt="음성이 'Hey Blocker' 또는 '헤이 블로커'로 시작됩니다."
-    )
-    logger.info("WhisperSTT 인스턴스 초기화 완료 (모델 캐시)")
 except Exception as e:
     logger.error(f"IoT 기기 클라이언트 초기화 실패: {e}")
 
@@ -128,7 +118,14 @@ def get_device_info():
 
     # 마지막 업데이트 description만 반환
     if last_update:
-        last_update_description = last_update["description"]
+        try:
+            update_info = device.contract_http.functions.getUpdateInfo(
+                last_update["uid"]
+            ).call()
+            last_update_description = update_info[3]  # description 필드
+        except Exception as e:
+            logger.error(f"마지막 업데이트 description 조회 실패: {e}")
+            last_update_description = None
     else:
         last_update_description = None
 
@@ -361,176 +358,6 @@ def get_notifications():
     filtered = [n for n in notifications if n["id"] > since_id]
     return jsonify({"notifications": filtered})
 
-
-from service.voice_service import VoiceService
-voice_service = VoiceService()
-
-@app.route("/api/device/voice/register", methods=["POST"])
-def api_voice_register():
-    """
-    사용자 등록용 음성 파일(webm)과 user_name을 받아 등록 처리 후 결과 반환
-    """
-    if "audio" not in request.files or "user_name" not in request.form:
-        return jsonify({"success": False, "error": "audio file or user_name missing"}), 400
-    audio_file = request.files["audio"]
-    user_name = request.form["user_name"]
-    audio_bytes = audio_file.read()
-    result = voice_service.register_speaker_from_webm(audio_bytes, user_name)
-    logger.info(f"/api/device/voice/register 응답 결과: {result}")
-    return jsonify(result)
-
-def get_stt_and_speaker_result(audio_bytes):
-    """stt_and_speaker_recognition 결과를 캐싱해서 반환"""
-    return voice_service.stt_and_speaker_recognition(audio_bytes)
-
-llm_result_cache = {}
-
-def call_llm_and_store(result, speaker_key):
-    logging.info(f"[NLU] 호출 시작 - speaker_key: {speaker_key}, payload: {{'sender': {result.get('speaker_type')}, 'message': {result.get('translated_text')}}}")
-    llm_payload = {
-        "sender": result.get("speaker_type"),
-        "message": result.get("translated_text")
-    }
-    try:
-        rasa_response = requests.post(
-            "http://rasa:5005/webhooks/rest/webhook",
-            json=llm_payload,
-            timeout=5
-        )
-        if rasa_response.ok:
-            rasa_output = rasa_response.json()
-            rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
-            llm_result_cache[speaker_key] = {"text": rasa_text}
-            logging.info(f"[LLM] 성공 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_output}")
-        else:
-            llm_result_cache[speaker_key] = {"error": f"Rasa error: {rasa_response.status_code}"}
-            logging.error(f"[LLM] 실패 - speaker_key: {speaker_key}, status: {rasa_response.status_code}, response: {rasa_response.text}")
-    except Exception as e:
-        llm_result_cache[speaker_key] = {"error": str(e)}
-        import traceback
-        logging.error(f"[LLM] 예외 발생 - speaker_key: {speaker_key}, error: {e}\n{traceback.format_exc()}")
-
-
-@app.route("/api/device/voice/stt", methods=["POST"])
-def api_voice_stt():
-    """
-    프론트에서 webm 음성 파일을 받아 원문 텍스트, 언어감지, 화자 인식 결과 반환 (프론트 전용)
-    LLM 결과는 별도 API로 제공
-    """
-    if "audio" not in request.files:
-        return jsonify({"error": "audio file missing"}), 400
-    audio_file = request.files["audio"]
-    audio_bytes = audio_file.read()
-    result = get_stt_and_speaker_result(audio_bytes)
-
-    response = {
-        "transcribed_text": result.get("transcribed_text"),
-        "detected_lang": result.get("detected_lang"),
-        "is_match": bool(result.get("is_match")),
-        "predicted_speaker": result.get("predicted_speaker")
-    }
-    # speaker_key는 predicted_speaker + timestamp 등으로 유니크하게 생성 가능
-    speaker_key = f"{result.get('predicted_speaker','unknown')}_{int(time.time()*1000)}"
-    response["llm_key"] = speaker_key
-    # LLM 호출을 백그라운드로 실행
-    logging.info(f"LLM 호출 스레드 시작 - speaker_key: {speaker_key}")
-    threading.Thread(target=call_llm_and_store, args=(result, speaker_key)).start()
-    return jsonify(response)
-
-
-@app.route("/api/device/voice/llm_result", methods=["GET"])
-def get_llm_result():
-    """
-    프론트가 llm_key로 LLM 결과를 가져가는 API
-    """
-    llm_key = request.args.get("llm_key")
-    if not llm_key:
-        return jsonify({"error": "llm_key is required"}), 400
-    result = llm_result_cache.get(llm_key)
-    if result is None:
-        return jsonify({"status": "pending"})
-    return jsonify({"llm_result": result})
-
-
-    if "audio" not in request.files:
-        return jsonify({"error": "audio file missing"}), 400
-    audio_file = request.files["audio"]
-    audio_bytes = audio_file.read()
-
-    # 1) STT + 화자인식
-    result = voice_service.stt_and_speaker_recognition(audio_bytes)
-    
-    translated_text = result.get("translated_text")
-    # predicted_speaker = result.get("predicted_speaker")  # ex) junhee
-    # detected_lang = result.get("detected_lang")
-    speaker_type = result.get("speaker_type")  # ex) owner/known/unknown
-    # is_match = result.get("is_match")
-    
-    # 등록되지 않은 사용자이면 403 반환
-    if not result.get("is_match"):
-        return jsonify({"error": "Speaker not recognized or not allowed."}), 403
-
-    # 2) Rasa에 sender=predicted_speaker, message=translated_text 로 의도 파악
-    rasa_response = requests.post(
-        "http://localhost:5005/webhooks/rest/webhook",
-        json={
-            "sender": speaker_type,
-            "message": translated_text
-        },
-        timeout=5
-    )
-    rasa_output = rasa_response.json()
-    print(f"[api_llm_voice_stt] Rasa 응답: {rasa_output}")
-
-    # Rasa는 [{ recipient_id, text }, ...] 구조니까
-    rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
-
-    # 프론트에 필요한 정보, 무슨 언어인지, 번역된 텍스트, 화자 정보
-    response = {
-        "detected_lang": result.get("detected_lang"),
-        "translated_text": rasa_text,
-        "speaker_type": result.get("speaker_type")
-    }
-    return jsonify(response)
-
-
-# @app.route("/api/device/voice/tts", methods=["POST"])
-# def api_voice_tts():
-#     """
-#     프론트에서 webm 음성 파일을 받아 STT→번역 후, 변환된 텍스트로 TTS 음성(wav) 파일을 반환
-#     """
-#     if "audio" not in request.files:
-#         return jsonify({"error": "No audio file uploaded"}), 400
-#     audio_file = request.files["audio"]
-#     import tempfile
-
-#     with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-#         tmp.write(audio_file.read())
-#         tmp_path = tmp.name
-#     try:
-#         from pipeline import SpeechService
-#         from tts import TTS
-
-#         service = SpeechService()
-#         with open(tmp_path, "rb") as f:
-#             audio_bytes = f.read()
-#         stt_text, detected_lang = service.audio_to_text(audio_bytes)
-#         tts = TTS()
-#         tts_audio = tts.synthesize(stt_text, language=detected_lang or "ko")
-#         # 음성(wav) 파일을 바이너리로 직접 반환
-#         from flask import send_file
-#         import io as _io
-
-#         return send_file(
-#             _io.BytesIO(tts_audio),
-#             mimetype="audio/wav",
-#             as_attachment=True,
-#             download_name="result.wav",
-#         )
-#     finally:
-#         import os
-
-#         os.remove(tmp_path)
 
 if __name__ == "__main__":
     import eventlet
