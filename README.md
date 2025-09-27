@@ -47,39 +47,33 @@ When the manufacturer registers a new software update on the blockchain, the dev
 - ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask  
 
 ## Installation
-See [INSTALL.md](./INSTALL.md) for installation and usage instructions.
+See [install.md](./install.md) for installation and usage instructions.
 
 ## Directory Structure
 ```
-backend/
-│   └── api.py                         # Backend API entry point
-│
-blockchain/
-│   └── registry_address.json           # Blockchain registry address/config
-│
-client/
-│   ├── device_client.py                # Implements the device update process
+Blocker_Device/
+├── backend/
+│   └── api.py                      # Backend API entry point
+├── blockchain/
+│   └── registry_address.json       # Blockchain registry address/config
+├── client/
+│   ├── device_client.py            # Implements the device update process
 │   └── keys/
 │       ├── device_secret_key_file.bin  # Device CP-ABE private key
 │       └── public_key.bin              # Device Manufacturer Public key
-│
-crypto/
+├── crypto/
 │   ├── cpabe/
-│   │   └── cpabe.py                    # CP-ABE (attribute-based encryption) implementation
-│   │
+│   │   └── cpabe.py                 # CP-ABE (attribute-based encryption) implementation
 │   ├── hash/
-│   │   └── hash.py                     # SHA3-256 Hash utilities
-│   │
+│   │   └── hash.py                  # SHA3-256 Hash utilities
 │   └── symmetric/
-│       └── symmetric.py                # AES-256 Symmetric-key encryption utilities
-│
-ipfs/
+│       └── symmetric.py             # AES-256 Symmetric-key encryption utilities
+├── ipfs/
 │   └── download/
-│       └── download.py                 # IPFS download logic
-│
-Dockerfile                              # Root application Docker build config
-docker-compose.yml                      # Service orchestration config
-requirements.txt                        # Python dependencies list
+│       └── download.py             # IPFS download logic
+├── Dockerfile                      # Root application Docker build config
+├── docker-compose.yml              # Service orchestration config
+└── requirements.txt                # Python dependencies list
 ```
 
 ## License

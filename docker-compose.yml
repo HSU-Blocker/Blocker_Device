@@ -15,8 +15,6 @@ services:
       - MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5002
       - DEVICE_API_PORT=5050
       - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
-      # - GOOGLE_APPLICATION_CREDENTIALS=/app/electric-vision-465910-b0-fd08e1f02d86.json
-      # - HF_TOKEN=${HF_TOKEN}
       - TORCH_CPP_LOG_LEVEL=ERROR
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     extra_hosts:
@@ -28,41 +26,6 @@ services:
       - ./client/updates:/app/client/updates   # 업데이트 파일을 client/updates 디렉토리에 저장
     networks:
       - app-network-device
-  
-  # #nlu, llm 추가 rsa -> nlu분류, rasa_action -> llm전달 및 차량제어, llm_fallback -> llm 통신
-  # rasa:
-  #   image: rasa/rasa:3.6.2
-  #   container_name: rasa_app
-  #   volumes:
-  #     - ./llm:/app
-  #   command: run --enable-api --port 5005 --debug
-  #   ports:
-  #     - "5005:5005"
-  #   depends_on:
-  #     - rasa_action
-  #   networks:
-  #     - app-network-device
-
-  # rasa_action:
-  #   build: ./llm/actions
-  #   ports:
-  #     - "5055:5055"
-  #   container_name: rasa_action_server
-  #   networks:
-  #     - app-network-device
-
-  # llm_fallback:
-  #   build:
-  #     context: ./llm_fallback
-  #     args:
-  #       HF_TOKEN: ${HF_TOKEN}
-  #   ports:
-  #     - "5010:5000"
-  #   container_name: llm_fallback_server
-  #   environment:
-  #     - HF_TOKEN=${HF_TOKEN}
-  #   networks:
-  #     - app-network-device
 
 networks:
   app-network-device:
