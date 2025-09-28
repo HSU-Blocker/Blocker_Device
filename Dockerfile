@@ -1,5 +1,5 @@
 # 플랫폼 지정 및 Python 3.9-slim 이미지 사용
-FROM --platform=linux/arm64 python:3.9-slim
+FROM --platform=linux/amd64 python:3.9-slim
 
 # 기본 패키지 설치 (libgmp-dev 포함)
 RUN apt-get update && apt-get install -y --no-install-recommends \
