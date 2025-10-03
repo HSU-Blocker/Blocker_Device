@@ -17,7 +17,6 @@ ipfshttpclient==0.8.0a2
 # 암호화 관련
 cryptography==44.0.1
 pycryptodome==3.19.1
-pysha3==1.0.2
 
 # 테스트 관련
 pytest==7.0.0
@@ -26,6 +25,3 @@ pytest-cov==3.0.0
 # 기타 유틸리티
 requests==2.32.4
 uuid==1.30
-
-# ECDSA 서명 관련
-ecdsa==0.19.1
