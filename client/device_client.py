@@ -129,7 +129,7 @@ class IoTDeviceClient:
             # 개인키 로드
             device_secret_key_file = os.path.join(KEY_DIR, "device_secret_key_file.bin")
             self.device_secret_key = self.cpabe.load_device_secret_key(device_secret_key_file)
-            logger.info(f"SKd: {self.device_secret_key}")
+            logger.info("기기 비밀키 로드 완료")  # SKd (Device secret key) loaded (value not logged)
 
         except Exception as e:
             logger.error(f"키 로드 중 오류 발생: {e}")
