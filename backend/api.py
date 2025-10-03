@@ -152,8 +152,8 @@ def check_connection():
         connected = device.web3_http.is_connected()
         return jsonify({"connected": connected})
     except Exception as e:
-        logger.error(f"블록체인 연결 확인 중 오류: {e}")
-        return jsonify({"connected": False, "error": str(e)}), 500
+        logger.error(f"블록체인 연결 확인 중 오류: {e}", exc_info=True)
+        return jsonify({"connected": False, "error": "블록체인 연결 중 오류가 발생했습니다."}), 500
 
 
 @app.route("/api/device/updates", methods=["GET"])
