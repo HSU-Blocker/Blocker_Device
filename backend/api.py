@@ -346,8 +346,10 @@ def get_update_history():
         update_history = device.get_owner_update_history()
         return jsonify({"history": update_history})
     except Exception as e:
+        import traceback
         logger.error(f"업데이트 이력 조회 실패: {e}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "서버 오류가 발생했습니다"}), 500
 
 
 @app.route("/api/notifications", methods=["GET"])
