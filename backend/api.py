@@ -330,7 +330,7 @@ def install_update():
                 {
                     "success": False,
                     "message": "업데이트 설치 중 오류가 발생했습니다.",
-                    "error": str(e),
+                    # "error": str(e),  # 내부 정보 노출 방지: 로그에만 기록
                 }
             ),
             500,
