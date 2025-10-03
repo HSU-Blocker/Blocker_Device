@@ -1,8 +1,8 @@
 # Flask 웹 프레임워크
-Flask==2.0.1
-Werkzeug==2.0.1
+Flask==2.2.5
+Werkzeug==3.0.6
 python-dotenv==0.19.1
-flask-cors==5.0.0 
+flask-cors==6.0.0 
 flask_socketio==5.0.1
 eventlet
 
@@ -15,8 +15,8 @@ websockets>=10.4
 ipfshttpclient==0.8.0a2
 
 # 암호화 관련
-cryptography==36.0.0
-pycryptodome==3.14.1
+cryptography==44.0.1
+pycryptodome==3.19.1
 pysha3==1.0.2
 
 # 테스트 관련
@@ -24,8 +24,8 @@ pytest==7.0.0
 pytest-cov==3.0.0
 
 # 기타 유틸리티
-requests==2.27.1
+requests==2.32.4
 uuid==1.30
 
 # ECDSA 서명 관련
-ecdsa==0.19.0
+ecdsa==0.19.1
