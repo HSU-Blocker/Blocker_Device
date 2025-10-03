@@ -35,17 +35,17 @@ When the manufacturer registers a new software update on the blockchain, the dev
 
 - ![Web3](https://img.shields.io/badge/Web3-F16822?style=flat&logo=web3dotjs&logoColor=white)  **Interact with the blockchain using Web3** libraries  
 
-- ![IPFS](https://img.shields.io/badge/IPFS_File_Download-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with **distributed storage** support  
+- ![IPFS](https://img.shields.io/badge/IPFS_File-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with **distributed storage** support  
 
-- ![AES-256](https://img.shields.io/badge/AES--256_Decryption-006699?style=flat&logo=databricks&logoColor=white)  **Decrypt update files** using AES-256 symmetric key to retrieve the original file  
+- ![AES-256](https://img.shields.io/badge/AES--256-006699?style=flat&logo=databricks&logoColor=white)  **Decrypt update files** using AES-256 symmetric key to retrieve the original file  
 
-- ![CP-ABE](https://img.shields.io/badge/CP--ABE_Key_Management-6C3483?style=flat&logo=academia&logoColor=white)  Decrypt the encrypted symmetric key using CP-ABE with the device’s secret key, **ensuring that decryption is only possible when the key matches the update policy defined by the manufacturer.**
+- ![CP-ABE](https://img.shields.io/badge/CP--ABE-6C3483?style=flat&logo=academia&logoColor=white)  Decrypt the encrypted symmetric key using CP-ABE with the device’s secret key, **ensuring that decryption is only possible when the key matches the update policy defined by the manufacturer.**
 
-- ![SHA3-256](https://img.shields.io/badge/SHA3--256_Hash_Verification-117A65?style=flat&logo=datadog&logoColor=white)  **Verify file integrity** by comparing SHA3-256 hash with blockchain values  
+- ![SHA3-256](https://img.shields.io/badge/SHA3--256-117A65?style=flat&logo=datadog&logoColor=white)  **Verify file integrity** by comparing SHA3-256 hash with blockchain values  
 
-- ![WebSocket](https://img.shields.io/badge/WebSocket_Event_Listener-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
+- ![WebSocket](https://img.shields.io/badge/WebSocket-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
 
-- ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask.  
+- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logoColor=white)  Device **backend server** built with Flask.  
 
 ## Installation
 See [install.md](./install.md) for installation and usage instructions.
