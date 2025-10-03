@@ -20,7 +20,8 @@ When the manufacturer registers a new software update on the blockchain, the dev
   - AiOT AutoCar Prime X is an AI-enabled model car equipped with the Nvidia Jetson Xavier NX module, offering sufficient computing power to run advanced applications.
 
   - In our project, we chose this car as the IoT device because the manufacturer’s update files were designed to deliver autonomous driving services. The device was set up to subscribe to these updates, so that each update installation would add new autonomous driving features. While we demonstrated our system on the AutoCar Prime X, the service is also designed to be compatible with other IoT devices such as Raspberry Pi.
-- **OS**: ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)  ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)  
+- **OS**: ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_shield)
+ ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)  
 - **Programming Language**: ![Python](https://img.shields.io/badge/Python_3.10--slim_(arm64)-3776AB?style=flat&logo=python&logoColor=white)  
   - Configured a Docker-based Ubuntu environment using the **Python 3.10-slim (arm64)** image  
 - **Development Tools**: ![VSCode](https://img.shields.io/badge/Visual_Studio_Code-007ACC?style=flat&logo=visualstudiocode&logoColor=white)  
@@ -89,3 +90,6 @@ For detailed contribution guidelines, please refer to the [Contribution Guide](h
 
 Contributions and questions are welcome via Issues and Pull Requests.
 For more information about the overall project, visit the [HSU-Blocker GitHub organization](https://github.com/HSU-Blocker).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_large)
