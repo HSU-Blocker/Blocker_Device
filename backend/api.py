@@ -253,7 +253,7 @@ def purchase_update():
 
     except ValueError as e:
         logger.error(f"업데이트 구매 중 값 오류: {e}")
-        return jsonify({"error": "잘못된 입력값입니다.", "details": str(e)}), 400
+        return jsonify({"error": "잘못된 입력값입니다."}), 400
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
         import traceback
@@ -261,7 +261,7 @@ def purchase_update():
         logger.error(traceback.format_exc())
         return (
             jsonify(
-                {"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}
+                {"error": "업데이트 구매 중 오류가 발생했습니다."}
             ),
             500,
         )
