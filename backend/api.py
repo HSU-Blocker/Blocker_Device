@@ -261,7 +261,7 @@ def purchase_update():
         logger.error(traceback.format_exc())
         return (
             jsonify(
-                {"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}
+                {"error": "업데이트 구매 중 오류가 발생했습니다."}
             ),
             500,
         )
