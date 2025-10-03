@@ -165,7 +165,7 @@ def check_updates():
         return jsonify({"updates": updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
-        return jsonify({"updates": [], "error": str(e)}), 500
+        return jsonify({"updates": [], "error": "업데이트 확인 중 오류 발생"}), 500
 
 
 # 디바이스 클라이언트 인스턴스를 반환하는 함수 추가
