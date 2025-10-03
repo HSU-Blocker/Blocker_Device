@@ -591,7 +591,7 @@ class IoTDeviceClient:
             logger.error(f"CP-ABE 복호화 실패 시 상태:")
             logger.error(f"- encrypted_key: {encrypted_key}")
             logger.error(f"- public_key: {public_key}")
-            logger.error(f"- device_secret_key: {device_secret_key}")
+            logger.error(f"- device_secret_key: [REDACTED]")
             return None
 
     def get_refunded_updates(self):
