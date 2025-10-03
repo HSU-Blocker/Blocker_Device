@@ -20,7 +20,7 @@ When the manufacturer registers a new software update on the blockchain, the dev
   - AiOT AutoCar Prime X is an AI-enabled model car equipped with the Nvidia Jetson Xavier NX module, offering sufficient computing power to run advanced applications.
 
   - In our project, we chose this car as the IoT device because the manufacturer’s update files were designed to deliver autonomous driving services. The device was set up to subscribe to these updates, so that each update installation would add new autonomous driving features. While we demonstrated our system on the AutoCar Prime X, the service is also designed to be compatible with other IoT devices such as Raspberry Pi.
-- **OS**: ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_shield)
+- **OS**: ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
  ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white)  
 - **Programming Language**: ![Python](https://img.shields.io/badge/Python_3.10--slim_(arm64)-3776AB?style=flat&logo=python&logoColor=white)  
   - Configured a Docker-based Ubuntu environment using the **Python 3.10-slim (arm64)** image  
@@ -35,17 +35,17 @@ When the manufacturer registers a new software update on the blockchain, the dev
 
 - ![Web3](https://img.shields.io/badge/Web3-F16822?style=flat&logo=web3dotjs&logoColor=white)  **Interact with the blockchain using Web3** libraries  
 
-- ![IPFS](https://img.shields.io/badge/IPFS_File_Download-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with **distributed storage** support  
+- ![IPFS](https://img.shields.io/badge/IPFS_File-65C2CB?style=flat&logo=ipfs&logoColor=white)  Download **encrypted update files** from IPFS with **distributed storage** support  
 
-- ![AES-256](https://img.shields.io/badge/AES--256_Decryption-006699?style=flat&logo=databricks&logoColor=white)  **Decrypt update files** using AES-256 symmetric key to retrieve the original file  
+- ![AES-256](https://img.shields.io/badge/AES--256-006699?style=flat&logo=databricks&logoColor=white)  **Decrypt update files** using AES-256 symmetric key to retrieve the original file  
 
-- ![CP-ABE](https://img.shields.io/badge/CP--ABE_Key_Management-6C3483?style=flat&logo=academia&logoColor=white)  Decrypt the encrypted symmetric key using CP-ABE with the device’s secret key, **ensuring that decryption is only possible when the key matches the update policy defined by the manufacturer.**
+- ![CP-ABE](https://img.shields.io/badge/CP--ABE-6C3483?style=flat&logo=academia&logoColor=white)  Decrypt the encrypted symmetric key using CP-ABE with the device’s secret key, **ensuring that decryption is only possible when the key matches the update policy defined by the manufacturer.**
 
-- ![SHA3-256](https://img.shields.io/badge/SHA3--256_Hash_Verification-117A65?style=flat&logo=datadog&logoColor=white)  **Verify file integrity** by comparing SHA3-256 hash with blockchain values  
+- ![SHA3-256](https://img.shields.io/badge/SHA3--256-117A65?style=flat&logo=datadog&logoColor=white)  **Verify file integrity** by comparing SHA3-256 hash with blockchain values  
 
-- ![WebSocket](https://img.shields.io/badge/WebSocket_Event_Listener-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
+- ![WebSocket](https://img.shields.io/badge/WebSocket-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
 
-- ![Flask](https://img.shields.io/badge/Flask_Device_Backend-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask  
+- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logoColor=white)  Device **backend server** built with Flask.  
 
 ## Installation
 See [install.md](./install.md) for installation and usage instructions.
@@ -91,5 +91,11 @@ For detailed contribution guidelines, please refer to the [Contribution Guide](h
 Contributions and questions are welcome via Issues and Pull Requests.
 For more information about the overall project, visit the [HSU-Blocker GitHub organization](https://github.com/HSU-Blocker).
 
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_large)
+<p align="left">
+  <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_large">
+    <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=large" alt="FOSSA Status Large"/>
+  </a>
+  <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_shield">
+    <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=shield" alt="FOSSA Status Shield"/>
+  </a>
+</p>
