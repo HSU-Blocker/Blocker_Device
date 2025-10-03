@@ -458,7 +458,8 @@ class IoTDeviceClient:
             
             # 3. CP-ABE로 암호화된 대칭키(Ec) 복호화하여 대칭키(kbj) 획득
             try:
-                logger.info(f"디바이스 속성 (SKd): {[s.strip() for s in self.device_secret_key['S']]}")
+                # logger.info(f"디바이스 속성 (SKd): {[s.strip() for s in self.device_secret_key['S']]}")
+                logger.info(f"디바이스 secret 속성(SKd) 사용 (총 {len(self.device_secret_key['S'])}개)")
                 
                 # 복호화된 대칭키 확인
                 decrypted_kbj = self.decrypt_cpabe(encrypted_key_json, self.public_key, self.device_secret_key)
