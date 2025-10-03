@@ -99,5 +99,3 @@ For more information about the overall project, visit the [HSU-Blocker GitHub or
     <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=shield" alt="FOSSA Status Shield"/>
   </a>
 </p>
-
-> Note: This project uses Flask as a backend framework but does not distribute or use the Flask logo.
