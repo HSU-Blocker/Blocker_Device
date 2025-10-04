@@ -4,7 +4,7 @@ Werkzeug==3.0.6
 python-dotenv==0.19.1
 flask-cors==6.0.0 
 flask-socketio==5.3.6
-eventlet==0.33.3
+eventlet==0.40.3
 
 # 블록체인 관련
 web3==7.9.0
