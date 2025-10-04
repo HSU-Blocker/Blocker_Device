@@ -6,13 +6,12 @@ This project (Blocker_Device) is licensed under the MIT License.
 It also includes third-party libraries distributed under the following licenses:
 
 - cryptography 44.0.1 (Apache-2.0, BSD-3-Clause, IETF)
-- eventlet (MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, HPND, PSF-2.0, Python-2.0)
+- eventlet 0.33.3 (MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, HPND, PSF-2.0, Python-2.0)
 - flask 2.2.5 (BSD-3-Clause, pallets-flask-logo)
 - flask-cors 6.0.0 (MIT)
 - Flask-SocketIO 5.3.6 (MIT)
 - python-dotenv 0.19.1 (BSD-3-Clause)
 - requests 2.32.4 (Apache-2.0)
-- uuid 1.30 (PSF-2.0)
 - web3 7.9.0 (MIT)
 - py-solc-x 1.1.1 (MIT)
 - websockets 10.4 (BSD-3-Clause)

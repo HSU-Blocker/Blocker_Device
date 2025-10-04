@@ -1,3 +1,11 @@
+===============================================================================
+LICENSES/PSF-2.0.txt
+Components using PSF-2.0 in this project:
+- uuid (Python standard library - no separate notice required)
+- eventlet (when PSF-2.0 option is chosen)
+  Copyright (c) 2007–2023 Eventlet contributors
+===============================================================================
+
 Python Software Foundation License Version 2
 
 Copyright (c) Python Software Foundation. All Rights Reserved.
