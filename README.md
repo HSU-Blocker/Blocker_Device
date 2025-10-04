@@ -80,6 +80,7 @@ Blocker_Device/
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+This distribution includes several third-party software components. **For a full list of all included libraries and their respective license texts, please refer to the [NOTICE.txt](./NOTICE.txt) file.**
 
 ---
 
