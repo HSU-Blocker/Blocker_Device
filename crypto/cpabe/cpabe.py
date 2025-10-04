@@ -1,6 +1,6 @@
 from charm.toolbox.pairinggroup import PairingGroup, GT
 from charm.schemes.abenc.abenc_bsw07 import CPabe_BSW07
-from charm.core.engine.util import objectToBytes, bytesToObject
+from charm.core.engine.util import bytesToObject
 import os
 import json
 import logging

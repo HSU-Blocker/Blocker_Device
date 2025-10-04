@@ -5,10 +5,9 @@ import time
 import logging
 from dotenv import load_dotenv
 import sys
-import threading
 import base64
 from hashlib import sha256
-from charm.core.engine.util import objectToBytes, bytesToObject
+from charm.core.engine.util import objectToBytes
 
 from crypto.symmetric.symmetric import SymmetricCrypto
 from crypto.hash.hash import HashTools

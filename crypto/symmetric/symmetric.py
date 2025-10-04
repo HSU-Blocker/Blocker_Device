@@ -1,11 +1,7 @@
 import os
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
-from charm.toolbox.pairinggroup import GT  # GT 직접 가져오기
+from Crypto.Util.Padding import unpad
 import logging
-from hashlib import sha256
-from charm.core.engine.util import objectToBytes
-from charm.toolbox.pairinggroup import PairingGroup
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

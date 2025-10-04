@@ -11,7 +11,7 @@ project_root = os.path.dirname(current_dir)
 sys.path.append(project_root)
 
 from client.device_client import IoTDeviceClient
-from flask import Flask, jsonify, request, send_from_directory, Response
+from flask import Flask, jsonify, request, send_from_directory
 from flask_socketio import SocketIO
 import logging
 import asyncio
