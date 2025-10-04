@@ -5,7 +5,7 @@ Components using Apache-2.0 in this project (verify exact versions upstream):
   Copyright (c) 2013–2023 Python Cryptographic Authority and contributors
 - requests 2.32.4
   Copyright (c) 2011–2023 Kenneth Reitz and contributors
-- eventlet 0.33.3
+- eventlet 0.40.3
   Copyright (c) 2007–2023 Eventlet contributors
 ===============================================================================
 
