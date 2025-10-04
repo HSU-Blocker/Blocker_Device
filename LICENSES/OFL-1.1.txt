@@ -1,0 +1,82 @@
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+---------------------------------------------------
+
+Preamble
+-------
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font design
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The fonts,
+including any derivative works, can be bundled, embedded, redistributed and/or
+sold with any software provided that any reserved names are not used by
+derivative works. The fonts and derivatives, however, cannot be released under
+any other license. The requirement for fonts to remain under this license
+does not apply to any document created using the fonts or their derivatives.
+
+Definitions
+-----------
+"Font Software" refers to the set of files you receive which include the
+copyright statement(s) as well as the actual font data. This may include
+source code, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder.
+
+"Modified Version" refers to any derivative font software resulting from
+the addition to or deletion from parts of either the Original Version or a
+Modified Version of the Font Software.
+
+"Author" refers to any designer, engineer, programmer, technical writer or
+other person who contributed to the Font Software.
+
+Permission & Conditions
+-----------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of the Font Software, to use, study, copy, merge, embed, modify, redistribute
+and sell modified and unmodified copies of the Font Software, subject to the
+following conditions:
+
+1) Neither the Font Software nor any of its individual components, in
+   Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+   redistributed and/or sold with any software, provided that a copy of this
+   license is included with the redistributed Font Software. These requirements
+   are not valid for any document created using the Font Software.
+
+3) The Font Software, modified or unmodified, in part or in whole, must be
+   distributed entirely under this license, and must not be distributed under
+   any other license. The requirement for fonts to remain under this license
+   does not apply to any document created using the Font Software.
+
+4) If you redistribute the Font Software, you must include in the distribution
+   a readable copy of this license.
+
+5) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software
+   shall not be used to promote, endorse or advertise any Modified Version,
+   except to acknowledge the contribution(s) of the Copyright Holder(s) and
+   the Author(s) or with their explicit written permission.
+
+Termination
+-----------
+This license becomes null and void if any of the above conditions are not met.
+
+Disclaimer
+----------
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING, BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE FONT SOFTWARE OR THE USE OR OTHER DEALINGS IN THE FONT
+SOFTWARE.
+
+For the authoritative full text and the list of "Reserved Font Names" (if any),
+see: https://scripts.sil.org/OFL
