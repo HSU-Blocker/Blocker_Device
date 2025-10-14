@@ -45,7 +45,7 @@ When the manufacturer registers a new software update on the blockchain, the dev
 
 - ![WebSocket](https://img.shields.io/badge/WebSocket-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
 
-- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logoColor=white)  Device **backend server** built with Flask.  
+- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask.  
 
 ## Installation
 See [install.md](./install.md) for installation and usage instructions.
@@ -93,11 +93,6 @@ For detailed contribution guidelines, please refer to the [Contribution Guide](h
 Contributions and questions are welcome via Issues and Pull Requests.
 For more information about the overall project, visit the [HSU-Blocker GitHub organization](https://github.com/HSU-Blocker).
 
-<p align="left">
   <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_large">
     <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=large" alt="FOSSA Status Large"/>
   </a>
-  <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device?ref=badge_shield">
-    <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FHSU-Blocker%2FBlocker_Device.svg?type=shield" alt="FOSSA Status Shield"/>
-  </a>
-</p>
