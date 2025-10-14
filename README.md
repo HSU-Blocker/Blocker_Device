@@ -45,7 +45,7 @@ When the manufacturer registers a new software update on the blockchain, the dev
 
 - ![WebSocket](https://img.shields.io/badge/WebSocket-008080?style=flat&logo=socketdotio&logoColor=white)  **Detect blockchain events** in real-time for update monitoring  
 
-- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logoColor=white)  Device **backend server** built with Flask.  
+- ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white)  Device **backend server** built with Flask.  
 
 ## Installation
 See [install.md](./install.md) for installation and usage instructions.
