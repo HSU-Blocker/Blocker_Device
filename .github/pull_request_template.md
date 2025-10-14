@@ -1,9 +1,3 @@
----
-name: 'Pull Request'
-about: 'Create a new pull request to the project'
-title: 'type: subject'
----
-
 ## 📝 Description
 
 <!-- 변경 사항에 대한 자세한 설명을 작성해주세요. -->
