@@ -49,18 +49,42 @@ PUBLIC_KEY={YOUR_BLOCKCHAIN_PUBLIC_KEY}
 
 # Manufacturer API URL
 MANUFACTURER_API_URL={YOUR_MANUFACTURER_API_URL}
+
+# Coqui TTS License Agreement
+COQUI_TOS_AGREED=1
+
+# HuggingFace Token
+HF_TOKEN={YOUR_HF_TOKEN}
 ```
 
 ## 3. Docker Setup
 
-This project is based on a **Python 3.10-slim (arm64)** Docker image,  
-which provides the runtime environment for IoT device execution on Ubuntu.
+This project uses a Python 3.10-slim (arm64) Docker image to set up
+the runtime environment for IoT device execution on Ubuntu.
 
-### Build and run the container
-Use the following command to build the Docker image and start the container in the background:
+### 3.1 Build the containers
+```sh
+docker-compose build
+```
 
-```bash
-docker-compose up --build -d
+### 3.2 Run the containers
+```sh
+docker-compose up
+```
+
+### 3.3 Run in detached mode (background)
+```sh
+docker-compose up -d
+```
+
+### 3.4 Run in detached mode with build
+```sh
+docker-compose up -d --build
+```
+
+### 3.5 Stop the containers
+```sh
+docker-compose down
 ```
 
 ## Notes

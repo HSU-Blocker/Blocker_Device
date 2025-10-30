@@ -68,6 +68,10 @@ def notify_new_update(uid, version, description):
 
 
 # 기기 클라이언트 인스턴스 생성
+from speech.stt import WhisperSTT
+
+whisper_stt_instance = None
+
 device = None
 try:
     device = IoTDeviceClient(
@@ -78,6 +82,12 @@ try:
         notification_callback=notify_new_update,
     )
     logger.info(f"IoT 기기 클라이언트 초기화 완료: {DEVICE_ID}")
+    # WhisperSTT 인스턴스도 서버 시작 시 미리 초기화 (모델 캐시 목적)
+    logger.info("[WhisperSTT] Whisper 모델 다운로드 및 초기화 시작...")
+    whisper_stt_instance = WhisperSTT(
+        initial_prompt="‘헤이 블로커’는 항상 음성의 첫 부분에 등장하며, 'Hey Blocker' 또는 '헤이 블로커'로 인식되어야 합니다."
+    )
+    logger.info("WhisperSTT 인스턴스 초기화 완료 (모델 캐시)")
 except Exception as e:
     logger.error(f"IoT 기기 클라이언트 초기화 실패: {e}")
 
@@ -118,14 +128,7 @@ def get_device_info():
 
     # 마지막 업데이트 description만 반환
     if last_update:
-        try:
-            update_info = device.contract_http.functions.getUpdateInfo(
-                last_update["uid"]
-            ).call()
-            last_update_description = update_info[3]  # description 필드
-        except Exception as e:
-            logger.error(f"마지막 업데이트 description 조회 실패: {e}")
-            last_update_description = None
+        last_update_description = last_update["description"]
     else:
         last_update_description = None
 
@@ -152,8 +155,8 @@ def check_connection():
         connected = device.web3_http.is_connected()
         return jsonify({"connected": connected})
     except Exception as e:
-        logger.error(f"블록체인 연결 확인 중 오류: {e}", exc_info=True)
-        return jsonify({"connected": False, "error": "블록체인 연결 중 오류가 발생했습니다."}), 500
+        logger.error(f"블록체인 연결 확인 중 오류: {e}")
+        return jsonify({"connected": False, "error": str(e)}), 500
 
 
 @app.route("/api/device/updates", methods=["GET"])
@@ -165,7 +168,7 @@ def check_updates():
         return jsonify({"updates": updates})
     except Exception as e:
         logger.error(f"업데이트 확인 실패: {e}")
-        return jsonify({"updates": [], "error": "업데이트 확인 중 오류 발생"}), 500
+        return jsonify({"updates": [], "error": str(e)}), 500
 
 
 # 디바이스 클라이언트 인스턴스를 반환하는 함수 추가
@@ -253,7 +256,7 @@ def purchase_update():
 
     except ValueError as e:
         logger.error(f"업데이트 구매 중 값 오류: {e}")
-        return jsonify({"error": "잘못된 입력값입니다."}), 400
+        return jsonify({"error": "잘못된 입력값입니다.", "details": str(e)}), 400
     except Exception as e:
         logger.error(f"업데이트 구매 중 오류: {e}")
         import traceback
@@ -261,7 +264,7 @@ def purchase_update():
         logger.error(traceback.format_exc())
         return (
             jsonify(
-                {"error": "업데이트 구매 중 오류가 발생했습니다."}
+                {"error": "업데이트 구매 중 오류가 발생했습니다.", "details": str(e)}
             ),
             500,
         )
@@ -330,7 +333,7 @@ def install_update():
                 {
                     "success": False,
                     "message": "업데이트 설치 중 오류가 발생했습니다.",
-                    # "error": str(e),  # 내부 정보 노출 방지: 로그에만 기록
+                    "error": str(e),
                 }
             ),
             500,
@@ -346,10 +349,8 @@ def get_update_history():
         update_history = device.get_owner_update_history()
         return jsonify({"history": update_history})
     except Exception as e:
-        import traceback
         logger.error(f"업데이트 이력 조회 실패: {e}")
-        logger.error(traceback.format_exc())
-        return jsonify({"error": "서버 오류가 발생했습니다"}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/notifications", methods=["GET"])
@@ -360,6 +361,130 @@ def get_notifications():
     filtered = [n for n in notifications if n["id"] > since_id]
     return jsonify({"notifications": filtered})
 
+
+from service.voice_service import VoiceService
+voice_service = VoiceService()
+
+@app.route("/api/device/voice/register", methods=["POST"])
+def api_voice_register():
+    """
+    사용자 등록용 음성 파일(webm)과 user_name을 받아 등록 처리 후 결과 반환
+    """
+    if "audio" not in request.files or "user_name" not in request.form:
+        return jsonify({"success": False, "error": "audio file or user_name missing"}), 400
+    audio_file = request.files["audio"]
+    user_name = request.form["user_name"]
+    audio_bytes = audio_file.read()
+    result = voice_service.register_speaker_from_webm(audio_bytes, user_name)
+    logger.info(f"/api/device/voice/register 응답 결과: {result}")
+    return jsonify(result)
+
+
+@app.route("/api/device/voice/stt", methods=["POST"])
+def api_voice_stt():
+    """
+    프론트에서 webm 음성 파일을 받아 원문 텍스트, 언어감지, 화자 인식 결과 반환 (프론트 전용)
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "audio file missing"}), 400
+    audio_file = request.files["audio"]
+    audio_bytes = audio_file.read()
+    result = voice_service.stt_and_speaker_recognition(audio_bytes)
+    logger.info(f"[api_voice_stt] STT 및 화자 인식 결과: {result}")
+
+    response = {
+        "transcribed_text": result.get("transcribed_text"),
+        "detected_lang": result.get("detected_lang"),
+        "is_match": bool(result.get("is_match")),  # numpy.bool_ → python bool 변환
+        "predicted_speaker": result.get("predicted_speaker")
+    }
+    return jsonify(response)
+
+
+@app.route("/api/llm/voice/stt", methods=["POST"])
+def api_llm_voice_stt():
+    """
+    webm 음성 파일을 받아 영어 번역 텍스트, 언어감지, 화자 인식 결과 반환 (LLM/NLU 전용)
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "audio file missing"}), 400
+    audio_file = request.files["audio"]
+    audio_bytes = audio_file.read()
+
+    # 1) STT + 화자인식
+    result = voice_service.stt_and_speaker_recognition(audio_bytes)
+    
+    translated_text = result.get("translated_text")
+    # predicted_speaker = result.get("predicted_speaker")  # ex) junhee
+    # detected_lang = result.get("detected_lang")
+    speaker_type = result.get("speaker_type")  # ex) owner/known/unknown
+    # is_match = result.get("is_match")
+    
+    # 등록되지 않은 사용자이면 403 반환
+    if not result.get("is_match"):
+        return jsonify({"error": "Speaker not recognized or not allowed."}), 403
+
+    # 2) Rasa에 sender=predicted_speaker, message=translated_text 로 의도 파악
+    rasa_response = requests.post(
+        "http://localhost:5005/webhooks/rest/webhook",
+        json={
+            "sender": speaker_type,
+            "message": translated_text
+        },
+        timeout=5
+    )
+    rasa_output = rasa_response.json()
+    print(f"[api_llm_voice_stt] Rasa 응답: {rasa_output}")
+
+    # Rasa는 [{ recipient_id, text }, ...] 구조니까
+    rasa_text = " ".join([msg["text"] for msg in rasa_output if "text" in msg])
+
+    # 프론트에 필요한 정보, 무슨 언어인지, 번역된 텍스트, 화자 정보
+    response = {
+        "detected_lang": result.get("detected_lang"),
+        "translated_text": rasa_text,
+        "speaker_type": result.get("speaker_type")
+    }
+    return jsonify(response)
+
+
+# @app.route("/api/device/voice/tts", methods=["POST"])
+# def api_voice_tts():
+#     """
+#     프론트에서 webm 음성 파일을 받아 STT→번역 후, 변환된 텍스트로 TTS 음성(wav) 파일을 반환
+#     """
+#     if "audio" not in request.files:
+#         return jsonify({"error": "No audio file uploaded"}), 400
+#     audio_file = request.files["audio"]
+#     import tempfile
+
+#     with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+#         tmp.write(audio_file.read())
+#         tmp_path = tmp.name
+#     try:
+#         from pipeline import SpeechService
+#         from tts import TTS
+
+#         service = SpeechService()
+#         with open(tmp_path, "rb") as f:
+#             audio_bytes = f.read()
+#         stt_text, detected_lang = service.audio_to_text(audio_bytes)
+#         tts = TTS()
+#         tts_audio = tts.synthesize(stt_text, language=detected_lang or "ko")
+#         # 음성(wav) 파일을 바이너리로 직접 반환
+#         from flask import send_file
+#         import io as _io
+
+#         return send_file(
+#             _io.BytesIO(tts_audio),
+#             mimetype="audio/wav",
+#             as_attachment=True,
+#             download_name="result.wav",
+#         )
+#     finally:
+#         import os
+
+#         os.remove(tmp_path)
 
 if __name__ == "__main__":
     import eventlet

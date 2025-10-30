@@ -1,0 +1,219 @@
+version: "3.1"
+
+nlu:
+
+# ===== 기본 인사 및 감정 관련 =====
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - moin
+    - hey there
+    - let's go
+    - hey dude
+    - goodmorning
+    - goodevening
+    - good afternoon
+    - hey blocker
+    - hey blocker, hello
+
+- intent: goodbye
+  examples: |
+    - cu
+    - good by
+    - see you later
+    - good night
+    - bye
+    - goodbye
+    - have a nice day
+    - see you around
+    - bye bye
+    - see you later
+    - talk to you later
+    - catch you later
+
+- intent: affirm
+  examples: |
+    - yes
+    - y
+    - indeed
+    - of course
+    - that sounds good
+    - correct
+    - absolutely
+    - sure
+
+- intent: deny
+  examples: |
+    - no
+    - n
+    - never
+    - I don't think so
+    - don't like that
+    - no way
+    - not really
+    - nope
+
+- intent: mood_great
+  examples: |
+    - perfect
+    - great
+    - amazing
+    - feeling like a king
+    - wonderful
+    - I am feeling very good
+    - I am great
+    - I am amazing
+    - I am going to save the world
+    - super stoked
+    - extremely good
+    - so so perfect
+    - so good
+    - so perfect
+
+- intent: mood_unhappy
+  examples: |
+    - my day was horrible
+    - I am sad
+    - I don't feel very well
+    - I am disappointed
+    - super sad
+    - I'm so sad
+    - sad
+    - very sad
+    - unhappy
+    - not good
+    - not very good
+    - extremely sad
+    - so saad
+    - so sad
+
+- intent: bot_challenge
+  examples: |
+    - are you a bot?
+    - are you a human?
+    - am I talking to a bot?
+    - am I talking to a human?
+
+# ===== 업데이트 관련 =====
+- intent: update_start
+  examples: |
+    - 업데이트 시작해
+    - 업데이트 시작
+    - 시작 업데이트
+    - start update
+    - begin update
+    - hey blocker, start the update
+    - let's start update
+    - please start the update
+
+- intent: update_list
+  examples: |
+    - 업데이트 목록 보여줘
+    - 업데이트 뭐 있어
+    - 업데이트 리스트
+    - show update list
+    - list updates
+    - hey blocker, show update list
+    - show me the updates
+
+- intent: install_update_uid
+  examples: |
+    - [a1b2c3](update_uid) 업데이트 설치해 줘
+    - [XYZ123](update_uid)를 설치해 줘
+    - [uid999](update_uid) 설치
+    - [UID45678](update_uid) 이거 설치해
+    - install [A1B2C3](update_uid)
+    - please install [XYZ123](update_uid)
+    - hey blocker, install [uid999](update_uid)
+
+- regex: update_uid
+  examples: |
+    - [a1b2c3](update_uid)
+    - [XYZ123](update_uid)
+    - [uid999](update_uid)
+    - [UID45678](update_uid)
+    - [A-Za-z0-9]{6,}(update_uid)
+
+# ===== 차량 제어 =====
+- intent: drive_forward
+  examples: |
+    - 직진해
+    - 앞으로 가
+    - move forward
+    - drive ahead
+    - go straight
+    - hey blocker, go straight
+    - hey blocker, move forward
+    - let's drive forward
+
+- intent: stop
+  examples: |
+    - 정지해
+    - 멈춰
+    - stop
+    - halt
+    - hey blocker, stop
+    - please stop the car
+    - hey blocker, halt
+
+- intent: shutdown
+  examples: |
+    - 셧다운 해
+    - 꺼
+    - shutdown
+    - turn off the car
+    - hey blocker, shut down
+    - please turn off the car
+
+# ===== 목적지 이동 =====
+- intent: go_hospital
+  examples: |
+    - 병원으로 가
+    - 병원에 가자
+    - go to the hospital
+    - drive to hospital
+    - hey blocker, go to the hospital
+    - hey blocker, let's go to the hospital
+    - let's go to the hospital
+    - go hospital
+    - hey blocker go hospital
+    - take me to the hospital
+    - please go to the hospital
+    - 헤이 블로커 병원으로 가자
+    - 블로커 병원으로 가줘
+    - 병원으로 가죠
+
+- intent: go_company
+  examples: |
+    - 회사로 가
+    - 회사에 가자
+    - go to the company
+    - go to the office
+    - drive to company
+    - hey blocker, go to the company
+    - hey blocker, let's go to the company
+    - let's go to the company
+    - please go to the company
+    - 헤이 블로커 회사로 가자
+    - 블로커 회사로 가줘
+    - 회사로 가죠
+
+- intent: go_university
+  examples: |
+    - 대학으로 가
+    - 대학교로 가
+    - 학교에 가자
+    - go to university
+    - drive to school
+    - hey blocker, go to the university
+    - hey blocker, let's go to the university
+    - let's go to the university
+    - please go to the university
+    - 헤이 블로커 대학교로 가자
+    - 블로커 학교로 가줘
+    - 학교로 가죠

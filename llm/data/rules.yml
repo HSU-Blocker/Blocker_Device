@@ -1,0 +1,58 @@
+version: "3.1"
+
+rules:
+
+- rule: Say goodbye anytime the user says goodbye
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Say 'I am a bot' anytime the user challenges
+  steps:
+  - intent: bot_challenge
+  - action: utter_iamabot
+
+- rule: update start rule
+  steps:
+    - intent: update_start
+    - action: action_update_start
+
+- rule: update list rule
+  steps:
+    - intent: update_list
+    - action: action_update_list
+
+- rule: drive forward rule
+  steps:
+    - intent: drive_forward
+    - action: action_drive_forward
+
+- rule: stop rule
+  steps:
+    - intent: stop
+    - action: action_stop
+
+- rule: shutdown rule
+  steps:
+    - intent: shutdown
+    - action: action_shutdown
+
+- rule: go hospital rule
+  steps:
+    - intent: go_hospital
+    - action: action_go_hospital
+
+- rule: go company rule
+  steps:
+    - intent: go_company
+    - action: action_go_company
+
+- rule: go university rule
+  steps:
+    - intent: go_university
+    - action: action_go_university
+
+- rule: fallback rule
+  steps:
+    - intent: nlu_fallback
+    - action: action_default_fallback

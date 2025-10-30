@@ -3,27 +3,65 @@ version: '3.8'
 services:
   device:
     build: .
-    platform: linux/arm64  # Platform specification to match Dockerfile
+    platform: linux/arm64
     ports:
       - "5050:5050"
     environment:
       - FLASK_ENV=development
       - WEB3_PROVIDER=http://host.docker.internal:8545
       - WEB3_WS_PROVIDER=ws://host.docker.internal:8545
-      - IPFS_API=/dns/host.docker.internal/tcp/5001/http # ipfshttpclient 연결용
-      - IPFS_GATEWAY=http://host.docker.internal:8080     # 게이트웨이 다운로드용
-      - MANUFACTURER_API_URL=http://blocker_manufacturer_backend:5002
+      - IPFS_API=/dns/host.docker.internal/tcp/5001/http
+      - IPFS_GATEWAY=http://host.docker.internal:8080
       - DEVICE_API_PORT=5050
-      - CP_ABE_DEBUG=1  # Enable CP-ABE debug logging
+      - CP_ABE_DEBUG=1
       - TORCH_CPP_LOG_LEVEL=ERROR
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/electric-vision-465910-b0-fd08e1f02d86.json
+      - HF_TOKEN=${HF_TOKEN}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./client/keys:/app/client/keys
       - ./data:/app/data
-      # - /home/soda/Blocker/sy:/app/client/updates # 업데이트 파일을 /soda/Blocker에 저장
-      - ./client/updates:/app/client/updates   # 업데이트 파일을 client/updates 디렉토리에 저장
+      - ./client/updates:/app/client/updates
+    networks:
+      - app-network-device
+  
+  # Rasa 본체 (NLU + Dialogue 모델)
+  rasa:
+    build: ./llm
+    container_name: rasa_app
+    ports:
+      - "5005:5005"
+    depends_on:
+      - rasa_action
+    volumes:
+      - ./llm:/app
+      - ./llm/models:/app/models
+    command: ["/bin/bash", "-c", "chmod -R 777 /app && rasa train && rasa run --enable-api --port 5005 --debug"]
+    networks:
+      - app-network-device
+
+  # Rasa 액션 서버 (Python 커스텀 액션 처리)
+  rasa_action:
+    build: ./llm/actions
+    container_name: rasa_action_server
+    ports:
+      - "5055:5055"
+    networks:
+      - app-network-device
+
+  # LLM fallback 서버 (huggingface 기반 텍스트 생성)
+  llm_fallback:
+    build:
+      context: ./llm_fallback
+      args:
+        HF_TOKEN: ${HF_TOKEN}
+    ports:
+      - "5010:5000"
+    container_name: llm_fallback_server
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
     networks:
       - app-network-device
 

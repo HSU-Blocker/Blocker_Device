@@ -1,0 +1,89 @@
+version: "3.1"
+
+intents:
+  # Blocker Device 전용 Intent
+  - update_start
+  - install_update_uid
+  - update_list
+  - drive_forward
+  - stop
+  - shutdown
+  - go_hospital
+  - go_company
+  - go_university
+
+  # Rasa 기본 Intent (stories.yml에서 참조됨)
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - mood_great
+  - mood_unhappy
+  - bot_challenge
+
+entities:
+  - update_uid
+
+slots:
+  update_uid:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: update_uid
+
+responses:
+  # Blocker 전용 응답
+  utter_update_start:
+    - text: "가장 최신 버전 업데이트를 시작합니다."
+  utter_update_list:
+    - text: "업데이트 목록을 조회합니다."
+  utter_update_uid:
+    - text: "선택하신 버전의 업데이트를 시작합니다."
+  utter_drive_forward:
+    - text: "차량이 직진합니다."
+  utter_stop:
+    - text: "차량을 정지합니다."
+  utter_shutdown:
+    - text: "차량을 셧다운합니다."
+  utter_go_hospital:
+    - text: "병원으로 이동합니다."
+  utter_go_company:
+    - text: "회사로 이동합니다."
+  utter_go_university:
+    - text: "대학교로 이동합니다."
+  utter_default:
+    - text: "죄송해요. 잘 이해하지 못했어요."
+
+  # Rasa 기본 템플릿 (stories.yml/rules.yml에서 참조)
+  utter_greet:
+    - text: "안녕하세요! 무엇을 도와드릴까요?"
+  utter_goodbye:
+    - text: "좋은 하루 되세요!"
+  utter_iamabot:
+    - text: "저는 Blocker Assistant입니다."
+  utter_happy:
+    - text: "좋아요, 계속 진행해볼게요!"
+  utter_cheer_up:
+    - text: "괜찮아요, 다음엔 더 잘될 거예요!"
+  utter_did_that_help:
+    - text: "이해가 되셨나요?"
+
+actions:
+  # Blocker 전용 Action
+  - action_update_start
+  - action_update_list
+  - action_update_uid
+  - action_drive_forward
+  - action_stop
+  - action_shutdown
+  - action_go_hospital
+  - action_go_company
+  - action_go_university
+
+  # Rasa 내장 fallback
+  - action_default_fallback
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
