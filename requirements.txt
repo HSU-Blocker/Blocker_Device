@@ -1,6 +1,6 @@
 # Flask 웹 프레임워크
 Flask==2.2.5
-Werkzeug==3.0.6
+Werkzeug==3.1.4
 python-dotenv==0.19.1
 flask-cors==6.0.0 
 flask-socketio==5.3.6
